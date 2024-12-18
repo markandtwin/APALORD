@@ -4,7 +4,7 @@ library(tidyr)
 library(pbmcapply)
 library(devtools)
 library(roxygen2)
-devtools::install("/Volumes/zhiping/KSAPA")
+devtools::install("./KSAPA")
 library(KSAPA)
 #detach("package:KSAPA", unload = TRUE)
 
