@@ -17,9 +17,9 @@ sample1 <- paste0(extdata_path,"/D0_isoquant")
 sample2 <- paste0(extdata_path,"/D7_isoquant")
 reads <- load_samples(sample1,sample2)
 
-PAS_data <- PAS_calling(gene_reference,reads,min=0.05,cores=7)
+PAS_data <- PAS_calling(gene_reference,reads,min=0.01,cores=7)
 PAS_df<- PAS_data[[1]]
-write.table(PAS_data[[2]],file="PASs_chr17.bed",quote = F,col.names = F, row.names = F,sep = "\t")
+write.table(PAS_data[[2]],file="../PASs_ENCODE_cortex_ovary.bed",quote = F,col.names = F, row.names = F,sep = "\t")
 
 
 APA_data <- APA_profile(gene_reference,reads,cores = 7)

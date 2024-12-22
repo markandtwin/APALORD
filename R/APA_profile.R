@@ -51,12 +51,12 @@ APA_profile <- function(gene_reference, reads, min=10,cores=1,data_type="direct 
         return(APA_table_name[gene,])
       }
     }
-    if(APA_table_name[gene,"strand"]=="+"){
-      Undiff <-subset(gene_all, treatment=="Undiff")$chromEnd
-      Diff <-subset(gene_all, treatment=="Diff")$chromEnd
+    if(APA_table_name[gene,"strand"]=="-"){
+      Undiff <-subset(gene_all, treatment=="Undiff")$chromStart
+      Diff <-subset(gene_all, treatment=="Diff")$chromStart
       if((length(Undiff)>=min)&&(length(Diff)>=min)){
-        test_ks_less <-ks.test(Undiff, Diff, alternative = "less")
-        test_ks_greater <- ks.test(Undiff, Diff, alternative = "greater")
+        test_ks_less <-ks.test(Diff, Undiff, alternative = "less")
+        test_ks_greater <- ks.test(Diff, Undiff, alternative = "greater")
         APA_table_name[gene,"pvalue"] <- min(test_ks_greater$p.value,test_ks_less$p.value)
         APA_table_name[gene,"distance"] <- max(test_ks_greater$statistic,test_ks_less$statistic)
         if (test_ks_greater$p.value<test_ks_less$p.value){
