@@ -150,6 +150,7 @@ APA_profile <- function(gene_reference, reads, control,experimental, min_counts=
       }
     }
   }
+  output_df$P_adjusted
   output_df[,1:(ncol(output_df) - 6)] <- output_df[,1:(ncol(output_df) - 6)] %>%
     mutate_if(is.character, as.factor)
   return(output_df)

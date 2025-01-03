@@ -8,7 +8,7 @@
 #' @export
 
 APA_plot <- function(APA_data,P_adj=0.05,delta=0.1){
-  APA_data <-subset(APA_table,number>1)
+  APA_data <-subset(APA_table,number!=1)
   APA_data$P_adj <-p.adjust(APA_data$pvalue, method = "fdr")
   APA_data$Col <- "gray"
   APA_data$APA_trend <- "no change"
