@@ -2,33 +2,33 @@
 % Please edit documentation in R/PAS_calling.R
 \name{PAS_calling}
 \alias{PAS_calling}
-\title{Extract top PASs used in both samples at single gene level}
+\title{Call PASs at single gene level}
 \usage{
 PAS_calling(
   gene_reference,
   reads,
   counts = 5,
-  min = 0.05,
+  min = 0.01,
   cores = 1,
-  data_type = "direct RNA"
+  direct_RNA = TRUE
 )
 }
 \arguments{
 \item{gene_reference}{information extracted from gtf file}
 
-\item{reads}{information from samples}
+\item{reads}{information from RNAseq samples}
 
-\item{counts}{minium read counts required for both samples at single gene level}
+\item{counts}{minium reads count required at single gene level for PAS calling}
 
 \item{min}{minium fraction required for a PAS to be included}
 
 \item{cores}{number of threads used for the computation}
 
-\item{data_type}{if the data is direct RNA}
+\item{direct_RNA}{whether or not the data is direct RNAseq}
 }
 \value{
-a table showing the top PASs for each single gene with enough depth in the data and also a bed file table for all the PASs
+a table showing the top PASs for each single gene with enough depth in the data and also a bed6 file table for all the PASs
 }
 \description{
-This function loads a gtf file and extract necessary information of each gene from it.
+This function extract PolyA sites information of each gene from the provided RNAseq data.
 }

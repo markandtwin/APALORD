@@ -1,40 +1,37 @@
-#' Extract top PASs used in both samples at single gene level
+#' Call PASs at single gene level
 #' 
-#' This function loads a gtf file and extract necessary information of each gene from it.
+#' This function extract PolyA sites information of each gene from the provided RNAseq data.
 #' @import dplyr stringr tidyr pbmcapply
 #' @param gene_reference information extracted from gtf file
-#' @param reads information from samples
+#' @param reads information from RNAseq samples
 #' @param cores number of threads used for the computation
-#' @param counts minium read counts required for both samples at single gene level
+#' @param counts minium reads count required at single gene level for PAS calling
 #' @param min minium fraction required for a PAS to be included
-#' @param data_type if the data is direct RNA
-#' @return a table showing the top PASs for each single gene with enough depth in the data and also a bed file table for all the PASs
+#' @param direct_RNA whether or not the data is direct RNAseq 
+#' @return a table showing the top PASs for each single gene with enough depth in the data and also a bed6 file table for all the PASs
 #' @export
 
-PAS_calling <- function(gene_reference, reads,counts=5, min=0.05,cores=1,data_type="direct RNA"){
-  gene_info <-gene_reference[[1]]
-  Undiff_df <- reads %>%filter(treatment == "Undiff") %>%group_by(gene_id) %>%filter(n() >= counts) %>%ungroup()
-  Diff_df <- reads %>%filter(treatment == "Diff") %>%group_by(gene_id) %>%filter(n() >= counts) %>%ungroup()
+PAS_calling <- function(gene_reference, reads,counts=5, min=0.01,cores=1,direct_RNA=TRUE){
+  gene_info <-gene_reference
+  reads_df <- reads  %>%group_by(gene_id) %>%filter(n() >= counts) %>%ungroup()
   
-  genes <- intersect(Undiff_df$gene_id, Diff_df$gene_id)
+  genes <- levels(reads_df$gene_id)
   genes <- subset(genes, genes!=".")
   PAS_table <- as.data.frame(subset(gene_info,gene_id%in%genes))
   rownames(PAS_table) <- PAS_table$gene_id
   
-  PAS_fun <- function (gene, reads, PAS_table,min=0.05,counts=5,data_type="direct RNA"){
+  PAS_fun <- function (gene, reads, PAS_table,min=0.01,counts=5,direct_RNA=TRUE){
     gene_all <-subset(reads, gene_id==gene)
-    if(data_type=="direct RNA"){
+    if(direct_RNA){
       gene_all <- subset(gene_all, strand==gene_info[gene,"strand"])
     }
     if(PAS_table[gene,"strand"]=="+"){
-      Undiff <-subset(gene_all, treatment=="Undiff")$chromEnd
-      Diff <-subset(gene_all, treatment=="Diff")$chromEnd}
+      df_3end <-gene_all$chromEnd}
     if(PAS_table[gene,"strand"]=="-"){
-      Undiff <-subset(gene_all, treatment=="Undiff")$chromStart
-      Diff <-subset(gene_all, treatment=="Diff")$chromStart}
+      df_3end<-gene_all$chromStart}
     
-    if((length(Undiff)>=counts)&&(length(Diff)>=counts)){
-      freq_table <- table(c(Diff, Undiff))
+    if(length(df_3end)>=counts){
+      freq_table <- table(df_3end)
       density_vals <- as.numeric(prop.table(freq_table))
       peak_indices <- which(density_vals>=min(sort(density_vals, decreasing = T)[1:50],na.rm = T))
       peaks_df <- data.frame(
@@ -86,18 +83,5 @@ PAS_calling <- function(gene_reference, reads,counts=5, min=0.05,cores=1,data_ty
   output <-pbmclapply(genes, PAS_fun, reads=reads, PAS_table, min=min, counts=counts,mc.cores = cores)
   bed_df <- do.call(rbind, lapply(output, `[[`, 2))
   PAS_list <- do.call(rbind, lapply(output, `[[`, 1))
-  PAS_list$Tandem_APA <- "NO"
-  stop_codon_genes <- intersect(unique(na.omit(gene_info)$gene_id),genes) 
-  for(gene in stop_codon_genes){
-    gene_bed_df <- subset(bed_df, name==gene_info[gene,"gene_name"])
-    if(length(gene_bed_df$start)>1){
-      if((gene_info[gene,"strand"]=="-")&&(max(gene_bed_df$end)<gene_info[gene,"distal_stop_codon_Start"])&&(length(gene_bed_df)>1)){
-        PAS_list[gene,"Tandem_APA"] <- "Yes"
-      }
-      if((gene_info[gene,"strand"]=="+")&&(min(gene_bed_df$start)>gene_info[gene,"distal_stop_codon_End"])&&(length(gene_bed_df)>1)){
-        PAS_list[gene,"Tandem_APA"] <- "Yes"
-      }
-    }
-  }
   return(list(PAS_list,bed_df))
 }

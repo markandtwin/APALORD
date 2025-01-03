@@ -2,18 +2,22 @@
 % Please edit documentation in R/load_samples.R
 \name{load_samples}
 \alias{load_samples}
-\title{Load samples}
+\title{Load two groups of samples}
 \usage{
-load_samples(infile1, infile2)
+load_samples(infile1, infile2, group1 = group1, group2 = group2)
 }
 \arguments{
-\item{infile1}{path to the input IsoQuant output files of sample 1 (Control)}
+\item{infile1}{path to the input IsoQuant output files of group 1 samples(Control)}
 
-\item{infile2}{path to the input IsoQuant output files of sample 2 (Treated)}
+\item{infile2}{path to the input IsoQuant output files of group 2 samples(Treated)}
+
+\item{group1}{name or condition of samples imported from infile1}
+
+\item{group2}{name or condition of samples imported from infile2}
 }
 \value{
-a S4 object of two lists including PASs information and APA changes.
+a table including all the reads from the two groups of samples
 }
 \description{
-This function loads the output files for each sample and extract necessary information for the analysis.
+This function loads the output files for each group and extract necessary information for the analysis.
 }

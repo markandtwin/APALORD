@@ -4,13 +4,15 @@
 \alias{load_gtf}
 \title{Load a gtf file for reference}
 \usage{
-load_gtf(infile)
+load_gtf(infile, cores = 1)
 }
 \arguments{
 \item{infile}{path to the input gtf file}
+
+\item{cores}{number of threads used for the computation}
 }
 \value{
-a list of two lists including gene annotation and stop codon from the gtf file
+a table including gene annotation, stop codon and last exon from the gtf file
 }
 \description{
 This function loads a gtf file and extract necessary information of each gene from it.

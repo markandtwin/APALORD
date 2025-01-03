@@ -2,9 +2,17 @@
 % Please edit documentation in R/gene_explore.R
 \name{gene_explore}
 \alias{gene_explore}
-\title{Visualize the 3'ends of all the reads in each sample for an individual gene}
+\title{Visualize the 3'ends of all the reads in each sample for an individual gene and the PAUs for each polyA site from each group/sample}
 \usage{
-gene_explore(gene_reference, reads, gene_list)
+gene_explore(
+  gene_reference,
+  reads,
+  gene_list,
+  APA_table,
+  control,
+  experimental,
+  direct_RNA = FALSE
+)
 }
 \arguments{
 \item{gene_reference}{information extracted from gtf file}
@@ -12,10 +20,18 @@ gene_explore(gene_reference, reads, gene_list)
 \item{reads}{information from samples}
 
 \item{gene_list}{name or id of a list of genes of interest}
+
+\item{APA_table}{output from APA_profile analysis}
+
+\item{control}{which group in the data is used as the control group}
+
+\item{experimental}{which group in the data is used as the experimental group}
+
+\item{direct_RNA}{whether the data is direct RNAseq, TRUE or FALSE}
 }
 \value{
 plots showing the 3'end distribution of a given gene
 }
 \description{
-Visualize the 3'ends of all the reads in each sample for an individual gene
+Visualize the 3'ends of all the reads in each sample for an individual gene and the PAUs for each polyA site from each group/sample
 }

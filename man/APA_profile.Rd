@@ -2,14 +2,18 @@
 % Please edit documentation in R/APA_profile.R
 \name{APA_profile}
 \alias{APA_profile}
-\title{Visualize the 3'ends of all the reads in each sample for an individual gene}
+\title{Transcriptome wide APA analysis}
 \usage{
 APA_profile(
   gene_reference,
   reads,
-  min = 10,
+  control,
+  experimental,
+  min_counts = 10,
+  min_reads = 5,
+  min_percent = 1,
   cores = 1,
-  data_type = "direct RNA"
+  direct_RNA = FALSE
 )
 }
 \arguments{
@@ -17,15 +21,23 @@ APA_profile(
 
 \item{reads}{information from samples}
 
-\item{min}{minium read counts required for both samples at single gene level}
+\item{control}{which group in the data is used as the control group}
+
+\item{experimental}{which group in the data is used as the experimental group}
+
+\item{min_counts}{minium read counts required for both samples at single gene level to perform the analysis}
+
+\item{min_reads}{minium read counts required for PAS calling}
+
+\item{min_percent}{minium PAU for a PAS to be considered for downstream analysis}
 
 \item{cores}{number of threads used for the computation}
 
-\item{data_type}{if the data is direct RNA}
+\item{direct_RNA}{whether the data is direct RNAseq, TRUE or FALSE}
 }
 \value{
 a table showing the APA change for each single gene with enough depth in the data
 }
 \description{
-This function loads a gtf file and extract necessary information of each gene from it.
+This function calls the PASs for each single gene, calculate PAUs for each PAS, and perform the statistics to get the P value and PolyA site usage distance between the selected two groups
 }
