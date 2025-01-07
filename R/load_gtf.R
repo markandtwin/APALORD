@@ -86,5 +86,6 @@ load_gtf <- function(infile,cores=1){
   }
   extract_distal <-pbmclapply(exon_genes, extract_fun, stop_codon_info=stop_codon_info,exon_info=exon_info, gene_info=gene_info, mc.cores = cores)
   gene_reference <- do.call(rbind, extract_distal)
+  row.names(gene_reference) <- gene_reference$gene_id
   return(gene_reference)
 }
