@@ -10,7 +10,7 @@
 #' @return a table including all the reads from the two groups of samples
 #' @export
 
-load_samples <- function(infile1, infile2,group1=group1,group2=group2){
+load_samples <- function(infile1, infile2,group1="group1",group2="group2"){
   reads_all <-data.frame(read_id=character(),
                          strand=character(),
                          gene_id=character(),

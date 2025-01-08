@@ -4,7 +4,7 @@
 \alias{load_samples}
 \title{Load two groups of samples}
 \usage{
-load_samples(infile1, infile2, group1 = group1, group2 = group2)
+load_samples(infile1, infile2, group1 = "group1", group2 = "group2")
 }
 \arguments{
 \item{infile1}{path to the input IsoQuant output files of group 1 samples(Control)}
