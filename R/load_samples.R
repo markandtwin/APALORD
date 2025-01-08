@@ -2,7 +2,7 @@
 #' 
 #' This function loads the output files for each group and extract necessary information for the analysis.
 #' @rdname load_samples
-#' @import dplyr stringr tidyr
+#' @import  dplyr data.table
 #' @param  infile1  path to the input IsoQuant output files of group 1 samples(Control) 
 #' @param  infile2  path to the input IsoQuant output files of group 2 samples(Treated)
 #' @param  group1 name or condition of samples imported from infile1  
@@ -10,40 +10,48 @@
 #' @return a table including all the reads from the two groups of samples
 #' @export
 
-load_samples <- function(infile1, infile2,group1="group1",group2="group2"){
-  reads_all <-data.frame(read_id=character(),
-                         strand=character(),
-                         gene_id=character(),
-                         chrom=character(),
-                         chromStart=numeric(),
-                         chromEnd=numeric(),
-                         sample=character(),
-                         treatment=character(),stringsAsFactors = TRUE)
-  for (sample in infile1){
-    sample_gene_reads <- read.csv(paste0(sample, "/OUT.read_assignments.tsv"), header = T, sep = "\t",skip = 2)[,c(1,3,5)]
-    sample_gene_reads <- sample_gene_reads[!duplicated(sample_gene_reads$X.read_id), ]
-    sample_reads_bed <- read.csv(paste0(sample, "/OUT.corrected_reads.bed"), header = T, sep = "\t",skip = 0)[,1:4]
-    sample_reads_bed <- sample_reads_bed[!duplicated(sample_reads_bed$name), ]
-    sample_reads <- left_join(sample_gene_reads, sample_reads_bed, by = c("X.read_id" = "name"))
-    colnames(sample_reads) <-c("read_id","strand","gene_id","chrom","chromStart","chromEnd")
-    sample_reads$sample <- sample
-    sample_reads$treatment <-group1 
-    sample_reads[c(1:4,7:8)] <- lapply(sample_reads[c(1:4,7:8)], as.factor)
-    reads_all <-rbind(reads_all,sample_reads)
+
+load_samples <- function(infile1, infile2, group1="group1", group2="group2") {
+  # Initialize an empty list to store results
+  reads_list <- list()
+  
+  # Define a helper function to read and process files for a given sample
+  process_sample <- function(sample, group) {
+    # Read gene reads and remove duplicates
+    sample_gene_reads <- fread(paste0(sample, "/OUT.read_assignments.tsv"), header = TRUE, sep = "\t", skip = 2)
+    colnames(sample_gene_reads)[1] <- "read_id"
+    sample_gene_reads <- unique(sample_gene_reads[,c(1,3,5)], by = "read_id")
+    
+    # Read bed file and remove duplicates
+    sample_reads_bed <- fread(paste0(sample, "/OUT.corrected_reads.bed"), header = TRUE, sep = "\t")
+    colnames(sample_reads_bed)[1] <- "chrom"
+    sample_reads_bed <- unique(sample_reads_bed[,1:4], by = "name")
+    
+    # Merge data
+    sample_reads <- merge(sample_gene_reads, sample_reads_bed, by.x = "read_id", by.y = "name", all.x = TRUE)
+    
+    # Add columns for sample and treatment
+    sample_reads[, sample := sample]
+    sample_reads[, treatment := group]
+    return(sample_reads)
   }
   
-  for (sample in infile2){
-    sample_gene_reads <- read.csv(paste0(sample, "/OUT.read_assignments.tsv"), header = T, sep = "\t",skip = 2)[,c(1,3,5)]
-    sample_gene_reads <- sample_gene_reads[!duplicated(sample_gene_reads$X.read_id), ]
-    sample_reads_bed <- read.csv(paste0(sample, "/OUT.corrected_reads.bed"), header = T, sep = "\t",skip = 0)[,1:4]
-    sample_reads_bed <- sample_reads_bed[!duplicated(sample_reads_bed$name), ]
-    sample_reads <- left_join(sample_gene_reads, sample_reads_bed, by = c("X.read_id" = "name"))
-    colnames(sample_reads) <-c("read_id","strand","gene_id","chrom","chromStart","chromEnd")
-    sample_reads$sample <- sample
-    sample_reads$treatment <- group2
-    sample_reads[c(1:4,7:8)] <- lapply(sample_reads[c(1:4,7:8)], as.factor)
-    reads_all <-rbind(reads_all,sample_reads)
+  # Process samples from infile1 (group1)
+  for (sample in infile1) {
+    print(paste("Collecting data from ", group1, " group"))
+    sample_data <- process_sample(sample, group1)
+    reads_list[[length(reads_list) + 1]] <- sample_data
   }
   
+  # Process samples from infile2 (group2)
+  for (sample in infile2) {
+    print(paste("Collecting data from ", group2, " group"))
+    sample_data <- process_sample(sample, group2)
+    reads_list[[length(reads_list) + 1]] <- sample_data
+  }
+  
+  # Combine all processed data into a single data.table
+  reads_all <- rbindlist(reads_list)
+  reads_all[, (setdiff(names(reads_all), c("chromStart", "chromEnd")) ) := lapply(.SD, as.factor), .SDcols = setdiff(names(reads_all), c("chromStart", "chromEnd"))]
   return(reads_all)
 }

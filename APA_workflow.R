@@ -2,6 +2,8 @@ library(dplyr)
 library(stringr)
 library(tidyr)
 library(pbmcapply)
+library(readr)
+library(data.table)
 library(devtools)
 library(roxygen2)
 devtools::install("../KSAPA")
@@ -11,7 +13,7 @@ library(KSAPA)
 extdata_path <- system.file("extdata",package = "KSAPA")
 gtf.file <- paste0(extdata_path,"/hg38_chr20.gtf")
 gtf.file <- "~/Desktop/Human_annotation/gencode.v43.chr_patch_hapl_scaff.annotation.gtf"
-gene_reference <- load_gtf(gtf.file)
+gene_reference <- load_gtf(gtf.file,cores = 7)
 
 
 sample1 <- paste0(extdata_path,"/D0_isoquant")
