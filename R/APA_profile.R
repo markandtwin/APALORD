@@ -137,7 +137,7 @@ APA_profile <- function(gene_reference, reads, control, experimental,
   output <- pbmclapply(genes, APA_fun, mc.cores = cores)
   
   # Combine the results
-  output_df <- rbindlist(output)
+  output_df <- rbindlist(output, fill = T)
   output_df <- output_df[, !c("chromStart", "chromEnd","distal_stop_codon_Start","distal_stop_codon_End","distance"), with = FALSE]
   return(output_df)
 }
