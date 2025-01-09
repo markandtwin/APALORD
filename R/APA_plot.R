@@ -20,8 +20,9 @@ APA_plot <- function(APA_data,P_cutoff=0.05,delta=0.1){
   lengthening <- length(subset(APA_data,Col=="red")$gene_id)
   all <- length(APA_data$gene_id)
   plot(x=APA_data$APA_change,  y=-log10(APA_data$P_adj), xlim=c(-1,1), 
-       main =" sample1 vs sample2 ",  pch=20, sub = paste(shortening,"shortened","and",lengthening,"lengthend" ,"in all", all, "events",sep=" "),
-       xlab = "APA change (sample2- sample1)",  ylab = "-log10(adjusted p value)",  col = APA_data$Col, cex=0.7)
+       main ="APA trend (experimental vs control)",  
+       pch= 20, sub = paste(shortening,"shortened","and",lengthening,"lengthend" ,"in all", all, "events",sep=" "),
+       xlab = "APA change (experimental - control)",  ylab = "-log10(adjusted p value)",  col = APA_data$Col, cex=0.7)
   abline(v = c(-delta,delta), col = "green", lty = 2, lwd = 2)
   abline(h=(-log10(P_cutoff)), col = "green", lty = 2, lwd = 2)
   return(APA_data[, !c("Col"), with = FALSE])
