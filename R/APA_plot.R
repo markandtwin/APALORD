@@ -7,15 +7,15 @@
 #' @return a data frame showing the significant APA change between sample1 and sample2
 #' @export
 
-APA_plot <- function(APA_data,P_adj=0.05,delta=0.1){
-  APA_data <-subset(APA_table,number!=1)
+APA_plot <- function(APA_data,P_cutoff=0.05,delta=0.1){
+  APA_data <-APA_data[as.numeric(number_of_PAS)>1]
   APA_data$P_adj <-p.adjust(APA_data$pvalue, method = "fdr")
   APA_data$Col <- "gray"
   APA_data$APA_trend <- "no change"
-  APA_data[((APA_data[,"P_adj"]<P_adj)&(APA_data[,"APA_change"]>(delta))),"Col"] <-"red"
-  APA_data[((APA_data[,"P_adj"]<P_adj)&(APA_data[,"APA_change"]>(delta))),"APA_trend"] <-"longer"
-  APA_data[((APA_data[,"P_adj"]<P_adj)&(APA_data[,"APA_change"]<(-delta))),"Col"] <-"blue"
-  APA_data[((APA_data[,"P_adj"]<P_adj)&(APA_data[,"APA_change"]<(-delta))),"APA_trend"] <-"shorter"
+  APA_data[(P_adj < P_cutoff & APA_change > delta), Col := "red"]
+  APA_data[(P_adj < P_cutoff & APA_change > delta), APA_trend := "longer"]
+  APA_data[(P_adj < P_cutoff & APA_change < -delta), Col := "blue"]
+  APA_data[(P_adj < P_cutoff & APA_change < -delta), APA_trend := "shorter"]
   shortening <- length(subset(APA_data,Col=="blue")$gene_id)
   lengthening <- length(subset(APA_data,Col=="red")$gene_id)
   all <- length(APA_data$gene_id)
@@ -23,6 +23,6 @@ APA_plot <- function(APA_data,P_adj=0.05,delta=0.1){
        main =" sample1 vs sample2 ",  pch=20, sub = paste(shortening,"shortened","and",lengthening,"lengthend" ,"in all", all, "events",sep=" "),
        xlab = "APA change (sample2- sample1)",  ylab = "-log10(adjusted p value)",  col = APA_data$Col, cex=0.7)
   abline(v = c(-delta,delta), col = "green", lty = 2, lwd = 2)
-  abline(h=(-log10(P_adj)), col = "green", lty = 2, lwd = 2)
-  return(APA_data[, !names(APA_data) %in% "Col"])
+  abline(h=(-log10(P_cutoff)), col = "green", lty = 2, lwd = 2)
+  return(APA_data[, !c("Col"), with = FALSE])
 }

@@ -1,4 +1,5 @@
 #' Visualize the 3'ends of all the reads in each sample for an individual gene and the PAUs for each polyA site from each group/sample
+#' @import data.table
 #' @param gene_reference information extracted from gtf file
 #' @param reads information from samples
 #' @param gene_list name or id of a list of genes of interest
@@ -10,29 +11,29 @@
 #' @export
 
 gene_explore <- function(gene_reference, reads, gene_list, APA_table, control,experimental, direct_RNA=FALSE){
-  gene_info <-gene_reference[,1:3]
+  gene_info <-gene_reference
   gene_info$short_gene_id <- gsub("\\.\\d+$", "", gene_info$gene_id)
   for (gene in gene_list){
-    i <- na.omit(gene_info[apply(gene_info, 1, function(row) any(row == gene)),"gene_id"])
-    gene_all <- subset(reads,gene_id==i)
-    if(direct_RNA=="direct RNA"){
-      gene_all <- subset(gene_all, strand==gene_info[gene,"strand"])
+    i <- gene_info[apply(gene_info, 1, function(x) any(grepl(gene, x)))]$gene_id
+    gene_all <- reads[as.character(gene_id)==i]
+    if(direct_RNA){
+      gene_all <- gene_all[strand == gene_info[i, strand]]
     }
-    if (subset(gene_info, gene_id==i)$strand == "+") {
+    if (gene_info[i, strand] == "+") {
       control_3end <- subset(gene_all, treatment == control)$chromEnd
       experimental_3end <- subset(gene_all, treatment == experimental)$chromEnd
     }
-    if (subset(gene_info, gene_id==i)$strand == "-") {
+    if (gene_info[i, strand] == "-") {
       control_3end <- subset(gene_all, treatment == control)$chromStart
       experimental_3end <- subset(gene_all, treatment == experimental)$chromStart
     }
-    APA_change_table<- data.frame(PAS_position=as.numeric(unlist(strsplit(APA_table[i,]$PASs, split = ","))),
-                                  PAU_changes=as.numeric(unlist(strsplit(APA_table[i,]$PAU_changes, split = ","))),
-                                  control_PAUs=as.numeric(unlist(strsplit(APA_table[i,]$PAUs_control, split = ","))),
-                                  experiment_PAUs=as.numeric(unlist(strsplit(APA_table[i,]$PAUs_experimental, split = ","))))
-    colors <- ifelse(APA_change_table$PAU_changes == max(APA_change_table$PAU_changes), "red", 
-                     ifelse(APA_change_table$PAU_changes == min(APA_change_table$PAU_changes), "blue", "gray"))
-    gene_annotation <-paste(APA_table[i,"gene_name"],"on",APA_table[i,"chrom"],"(",APA_table[i,"strand"], ")",sep=" ")
+    APA_change_table<- data.frame(PAS_position=as.numeric(unlist(strsplit(APA_table[gene_id==i]$PAS_coordinates, split = ","))),
+                                  PAU_changes=as.numeric(unlist(strsplit(APA_table[gene_id==i]$PAU_changes, split = ","))),
+                                  control_PAUs=as.numeric(unlist(strsplit(APA_table[gene_id==i]$PAUs_control, split = ","))),
+                                  experiment_PAUs=as.numeric(unlist(strsplit(APA_table[gene_id==i]$PAUs_experimental, split = ","))))
+    colors <- ifelse(APA_change_table$PAU_changes > 0 & APA_change_table$PAU_changes == max(APA_change_table$PAU_changes), "red",
+                     ifelse(APA_change_table$PAU_changes < 0 & APA_change_table$PAU_changes == min(APA_change_table$PAU_changes), "blue", "gray"))
+    gene_annotation <-paste(APA_table[gene_id==i]$gene_name,"on",APA_table[gene_id==i]$chrom,"(",APA_table[gene_id==i]$strand, ")",sep=" ")
     par(mar = c(6, 5, 4, 2) + 0.1,mfrow = c(2, 2))
     layout(matrix(c(1, 2, 3, 3), 2, 2, byrow = TRUE))
     plot(ecdf(control_3end),xlim=c(min(c(control_3end,experimental_3end)),max(c(control_3end,experimental_3end))),
@@ -52,7 +53,7 @@ gene_explore <- function(gene_reference, reads, gene_list, APA_table, control,ex
             xlab = "PAS coordinates",
             ylab = "Delta_PAU (%)",
             col = colors,
-            ylim = c(2*min(APA_change_table$PAU_changes),2*max(APA_change_table$PAU_changes)),
+            ylim = c(2*min(APA_change_table$PAU_changes,0),2*max(APA_change_table$PAU_changes,0)),
             sub = gene_annotation)
     par(mfrow = c(1, 1))
   }

@@ -17,6 +17,7 @@ load_samples <- function(infile1, infile2, group1="group1", group2="group2") {
   
   # Define a helper function to read and process files for a given sample
   process_sample <- function(sample, group) {
+    gc()
     # Read gene reads and remove duplicates
     sample_gene_reads <- fread(paste0(sample, "/OUT.read_assignments.tsv"), header = TRUE, sep = "\t", skip = 2)
     colnames(sample_gene_reads)[1] <- "read_id"
@@ -38,7 +39,7 @@ load_samples <- function(infile1, infile2, group1="group1", group2="group2") {
   
   # Process samples from infile1 (group1)
   for (sample in infile1) {
-    print(paste("Collecting data from ", group1, " group"))
+    print(paste0("Collecting data from ", group1, " group"))
     sample_data <- process_sample(sample, group1)
     reads_list[[length(reads_list) + 1]] <- sample_data
   }
@@ -53,5 +54,6 @@ load_samples <- function(infile1, infile2, group1="group1", group2="group2") {
   # Combine all processed data into a single data.table
   reads_all <- rbindlist(reads_list)
   reads_all[, (setdiff(names(reads_all), c("chromStart", "chromEnd")) ) := lapply(.SD, as.factor), .SDcols = setdiff(names(reads_all), c("chromStart", "chromEnd"))]
+  reads_all <-subset(reads_all,gene_id!=".")
   return(reads_all)
 }

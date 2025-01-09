@@ -70,25 +70,33 @@ PAU_by_sample <- function(gene_reference, reads, min_reads=5, min_percent=1, cor
       call_df <- call_df[order(call_df$Density, decreasing = TRUE), ]
       
       if (nrow(call_df) > 0) {
-        call_df$Density <- round(call_df$Density, 4)
+        call_df$Density <- round(call_df$Density, 2)
         PAS_gene <- PAS_table[gene, 1:4][rep(1, nrow(call_df)),]
         PAS_gene$PAS <- call_df$Value
         
         # Parallelize per sample
-        for (sample in unique(reads_dt$sample)) {
-          sample_df <- gene_all[sample == sample]
-          PAS_gene[, sample] <- round(sapply(call_df$Value, function(x) {
-            mean(abs(sample_df$chromEnd - x) <= 20) * 100
-          }), 2)
+        if (all(table(gene_all$sample)>=min_reads)) {
+          for (sample_name in as.vector(levels(reads_dt$sample))) {
+            sample_df <- gene_all[sample == sample_name]
+            if (strand == "+") {
+              PAS_gene[, sample_name] <- round(sapply(call_df$Value, function(x) {
+                mean(abs(sample_df$chromEnd - x) <= 20) * 100
+              }), 2)
+            } else {
+              PAS_gene[, sample_name] <- round(sapply(call_df$Value, function(x) {
+                mean(abs(sample_df$chromStart - x) <= 20) * 100
+              }), 2)
+            }
+          }
+          return(PAS_gene)
         }
-        return(PAS_gene)
       }
     }
   }
   
   # Parallel processing
   PAU_output <- pbmclapply(genes, PAU_fun, mc.cores = cores)
-  PAU_table <- rbindlist(PAU_output)  # Combine results
+  PAU_table <- rbindlist(PAU_output,fill = T)  # Combine results
   
   return(PAU_table)
 }
