@@ -13,7 +13,7 @@ Imports:
     stringr,
     dplyr,
     tidyr,
-    readr
+    data.table
 Suggests: 
     knitr,
     devtools,
