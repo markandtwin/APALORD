@@ -118,10 +118,10 @@ APA_profile <- function(gene_reference, reads, control, experimental,
         APA_gene[, c("PAUs_control", "PAUs_experimental", "PAU_changes") := as.list(c(paste(PAUs_control, collapse = ","),
                                                                                       paste(PAUs_experimental, collapse = ","),paste(PAU_changes, collapse = ",")))]
         if (as.numeric(PAS_info[1]) > 1) {
-          if((strand=="-")&&(PASs_gene[length(PASs_gene)]<APA_gene[,"chromEnd"])){
+          if((strand=="-")&&(PASs_gene[length(PASs_gene)]<APA_gene[,"last_exon_chromEnd"])){
             APA_gene[,"APA_type"] <- "Last_exon_tandem_APA"
           }
-          else if((strand=="+")&&(PASs_gene[1]>APA_gene[,"chromStart"])){
+          else if((strand=="+")&&(PASs_gene[1]>APA_gene[,"last_exon_chromStart"])){
             APA_gene[,"APA_type"] <- "Last_exon_tandem_APA"
           }
           else {
@@ -138,6 +138,7 @@ APA_profile <- function(gene_reference, reads, control, experimental,
   
   # Combine the results
   output_df <- rbindlist(output, fill = T)
-  output_df <- output_df[, !c("chromStart", "chromEnd","distal_stop_codon_Start","distal_stop_codon_End","distance"), with = FALSE]
+  output_df$number_of_PAS <- as.numeric(output_df$number_of_PAS)
+  output_df <- output_df[, !c("last_exon_chromStart", "last_exon_chromEnd","distal_stop_codon_Start","distal_stop_codon_End","distance"), with = FALSE]
   return(output_df)
 }

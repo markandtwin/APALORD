@@ -1,7 +1,7 @@
 #' Load a gtf file for reference
 #' 
 #' This function loads a gtf file and extract necessary information of each gene from it.
-#' @import  stringr pbmcapply dplyr data.table
+#' @import  stringr pbmcapply dplyr data.table utils
 #' @param infile path to the input gtf file
 #' @param cores number of threads used for the computation
 #' @return a table including gene annotation, stop codon and last exon from the gtf file
@@ -108,6 +108,7 @@ load_gtf <- function(infile, cores = 1) {
   gene_reference <- rbindlist(extract_distal)%>% mutate_if(is.character, as.factor)
   gene_reference$gene_id <- gsub('"', '', gene_reference$gene_id)
   gene_reference$gene_name <- gsub('"', '', gene_reference$gene_name)
+  names(gene_reference)[3:4]<-c("last_exon_chromStart", "last_exon_chromEnd")
   setDT(gene_reference)
   setkey(gene_reference, gene_id)
 

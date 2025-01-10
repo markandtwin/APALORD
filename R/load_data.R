@@ -11,12 +11,13 @@
 load_data <- function(infile,group=group){
   print(paste("Collecting data from ", group, " group"))
   sample <-infile
-  sample_gene_reads <- fread(paste0(sample, "/OUT.read_assignments.tsv"), header = TRUE, sep = "\t", skip = 2)
+  files <- list.files(path = sample, full.names = T)
+  sample_gene_reads <- fread(files[2], header = TRUE, sep = "\t", skip = 2)
   colnames(sample_gene_reads)[1] <- "read_id"
   sample_gene_reads <- unique(sample_gene_reads[,c(1,3,5)], by = "read_id")
   
   # Read bed file and remove duplicates
-  sample_reads_bed <- fread(paste0(sample, "/OUT.corrected_reads.bed"), header = TRUE, sep = "\t")
+  sample_reads_bed <- fread(files[1], header = TRUE, sep = "\t")
   colnames(sample_reads_bed)[1] <- "chrom"
   sample_reads_bed <- unique(sample_reads_bed[,1:4], by = "name")
   
@@ -28,5 +29,6 @@ load_data <- function(infile,group=group){
   sample_reads[, treatment := group]
   reads_all <- sample_reads
   reads_all[, (setdiff(names(reads_all), c("chromStart", "chromEnd")) ) := lapply(.SD, as.factor), .SDcols = setdiff(names(reads_all), c("chromStart", "chromEnd"))]
+  reads_all <-subset(reads_all,gene_id!=".")
   return(reads_all)
 }
