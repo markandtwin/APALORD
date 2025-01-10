@@ -1,7 +1,7 @@
 #' Load a gtf file for reference
 #' 
 #' This function loads a gtf file and extract necessary information of each gene from it.
-#' @import  stringr pbmcapply dplyr data.table utils
+#' @import  stringr pbmcapply dplyr data.table 
 #' @param infile path to the input gtf file
 #' @param cores number of threads used for the computation
 #' @return a table including gene annotation, stop codon and last exon from the gtf file

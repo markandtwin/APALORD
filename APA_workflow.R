@@ -18,7 +18,7 @@ gene_reference <- load_gtf(gtf.file,cores = 7)
 
 sample1 <- paste0(extdata_path,"/D0_isoquant")
 sample2 <- paste0(extdata_path,"/D7_isoquant")
-#sample1 <- "~/Desktop/KSAPA/WT_D0_dRNA.no_sec.isoquant/OUT/"
+#sample1 <- "~/Desktop/KSAPA/WT_D0_dRNA.no_sec.isoquant/"
 #sample2 <- "~/Desktop/KSAPA/WT_D7_dRNA_4.isoquant/"
 reads <- load_samples(sample1,sample2, group1="D0",group2="D7")
 
