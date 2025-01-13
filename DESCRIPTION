@@ -13,8 +13,7 @@ Imports:
     stringr,
     dplyr,
     tidyr,
-    data.table,
-    utils
+    data.table
 Suggests: 
     knitr,
     devtools,

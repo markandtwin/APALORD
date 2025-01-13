@@ -4,10 +4,10 @@
 \alias{load_gtf}
 \title{Load a gtf file for reference}
 \usage{
-load_gtf(infile, cores = 1)
+load_gtf(gtf_file, cores = 1)
 }
 \arguments{
-\item{infile}{path to the input gtf file}
+\item{gtf_file}{path to the input gtf file}
 
 \item{cores}{number of threads used for the computation}
 }

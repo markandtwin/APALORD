@@ -7,10 +7,10 @@
 PAS_calling(
   gene_reference,
   reads,
-  counts = 5,
-  min = 0.01,
+  min_reads = 5,
+  min_percent = 1,
   cores = 1,
-  direct_RNA = TRUE
+  direct_RNA = FALSE
 )
 }
 \arguments{
@@ -18,9 +18,9 @@ PAS_calling(
 
 \item{reads}{information from RNAseq samples}
 
-\item{counts}{minium reads count required at single gene level for PAS calling}
+\item{min_reads}{minium read counts required at single gene level for PAS calling}
 
-\item{min}{minium fraction required for a PAS to be included}
+\item{min_percent}{minium percent required for a PAS to be included (0-100)}
 
 \item{cores}{number of threads used for the computation}
 

@@ -112,11 +112,14 @@ APA_profile <- function(gene_reference, reads, control, experimental,
       if (!is.null(PAS_info)) {
         PASs_gene <- as.numeric(unlist(strsplit(PAS_info[2], split = ",")))
         PAUs_control <- round(sapply(PASs_gene, function(x) mean(abs(control_3end - x) <= 20) * 100), 2)
+        reads_control <- sapply(PASs_gene, function(x) sum(abs(control_3end - x) <= 20))
         PAUs_experimental <- round(sapply(PASs_gene, function(x) mean(abs(experimental_3end - x) <= 20) * 100), 2)
+        reads_experimental <- sapply(PASs_gene, function(x) sum(abs(experimental_3end - x) <= 20))
         PAU_changes <- round(PAUs_experimental - PAUs_control, 2)
         APA_gene[,c("number_of_PAS","PAS_coordinates","PAS_read_counts","PAS_PAUs") := as.list(PAS_info)]
         APA_gene[, c("PAUs_control", "PAUs_experimental", "PAU_changes") := as.list(c(paste(PAUs_control, collapse = ","),
                                                                                       paste(PAUs_experimental, collapse = ","),paste(PAU_changes, collapse = ",")))]
+        APA_gene[, c("reads_control", "reads_experimental") := as.list(c(paste(reads_control, collapse = ","),paste(reads_experimental, collapse = ",")))]
         if (as.numeric(PAS_info[1]) > 1) {
           if((strand=="-")&&(PASs_gene[length(PASs_gene)]<APA_gene[,"last_exon_chromEnd"])){
             APA_gene[,"APA_type"] <- "Last_exon_tandem_APA"
@@ -128,8 +131,8 @@ APA_profile <- function(gene_reference, reads, control, experimental,
             APA_gene[,"APA_type"] <- "Mixed_APA"
           }
         }
+        return(APA_gene)
       }
-      return(APA_gene)
     }
   }
   
@@ -139,6 +142,6 @@ APA_profile <- function(gene_reference, reads, control, experimental,
   # Combine the results
   output_df <- rbindlist(output, fill = T)
   output_df$number_of_PAS <- as.numeric(output_df$number_of_PAS)
-  output_df <- output_df[, !c("last_exon_chromStart", "last_exon_chromEnd","distal_stop_codon_Start","distal_stop_codon_End","distance"), with = FALSE]
+  output_df <- output_df[, !c("last_exon_chromStart", "last_exon_chromEnd","distance"), with = FALSE]
   return(output_df)
 }
