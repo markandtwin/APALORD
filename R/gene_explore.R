@@ -31,17 +31,18 @@ gene_explore <- function(gene_reference, reads, gene_list, APA_table, control,ex
                                   PAU_changes=as.numeric(unlist(strsplit(APA_table[gene_id==i]$PAU_changes, split = ","))),
                                   control_PAUs=as.numeric(unlist(strsplit(APA_table[gene_id==i]$PAUs_control, split = ","))),
                                   experiment_PAUs=as.numeric(unlist(strsplit(APA_table[gene_id==i]$PAUs_experimental, split = ","))))
-    colors <- ifelse(APA_change_table$PAU_changes > 0 & APA_change_table$PAU_changes == max(APA_change_table$PAU_changes), "red",
+    APA_change_table[,"Colors"] <- ifelse(APA_change_table$PAU_changes > 0 & APA_change_table$PAU_changes == max(APA_change_table$PAU_changes), "red",
                      ifelse(APA_change_table$PAU_changes < 0 & APA_change_table$PAU_changes == min(APA_change_table$PAU_changes), "blue", "gray"))
     gene_annotation <-paste(APA_table[gene_id==i]$gene_name,"on",APA_table[gene_id==i]$chrom,"(",APA_table[gene_id==i]$strand, ")",sep=" ")
+    APA_change_table <- APA_change_table[order(APA_change_table$PAS_position, decreasing = F), ]
     par(mar = c(6, 5, 4, 2) + 0.1,mfrow = c(2, 2))
     layout(matrix(c(1, 2, 3, 3), 2, 2, byrow = TRUE))
-    plot(ecdf(control_3end),xlim=c(min(c(control_3end,experimental_3end)),max(c(control_3end,experimental_3end))),
+    plot(ecdf(control_3end),xlim=c(min(APA_change_table$PAS_position)-100,max(APA_change_table$PAS_position)+100),
          main="Cumulative Curves",xlab=gene_annotation, ylab="Fraction")
     legend(x = "bottomright", box.col = "white", 
            bg ="white", box.lwd = 2 , title=" ", legend=c(control, experimental),  fill = c("black","pink"))
     plot(ecdf(experimental_3end), add=T, col="pink")
-    plot(density(control_3end,bw=10),xlim=c(min(c(control_3end,experimental_3end)),max(c(control_3end,experimental_3end))),
+    plot(density(control_3end,bw=10),xlim=c(min(APA_change_table$PAS_position)-100,max(APA_change_table$PAS_position)+100),
          ylim=c(0, max(c(density(control_3end,bw=10)$y,density(experimental_3end,bw=10)$y))),
          main="PolyA sites",xlab=gene_annotation, ylab="Density")
     legend(x = "topright", box.col = "white", 
@@ -52,7 +53,7 @@ gene_explore <- function(gene_reference, reads, gene_list, APA_table, control,ex
             main = paste("PAU difference at each PolyA site (", experimental, "-", control,")", sep=" "),
             xlab = "PAS coordinates",
             ylab = "Delta_PAU (%)",
-            col = colors,
+            col = APA_change_table$Colors,
             ylim = c(2*min(APA_change_table$PAU_changes,0),2*max(APA_change_table$PAU_changes,0)),
             sub = gene_annotation)
     par(mfrow = c(1, 1))

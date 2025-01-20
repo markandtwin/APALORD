@@ -12,14 +12,11 @@ library(KSAPA)
 
 extdata_path <- system.file("extdata",package = "KSAPA")
 gtf_file <- paste0(extdata_path,"/hg38_chr21.gtf.gz")
-#gtf_file <- "~/Desktop/Human_annotation/gencode.v43.chr_patch_hapl_scaff.annotation.gtf"
 gene_reference <- load_gtf(gtf_file,cores = 5)
 
 
 sample1 <- paste0(extdata_path,"/D0_isoquant")
 sample2 <- paste0(extdata_path,"/D7_isoquant")
-#sample1 <- "~/Desktop/KSAPA/WT_D0_dRNA.no_sec.isoquant/"
-#sample2 <- "~/Desktop/KSAPA/WT_D7_dRNA_4.isoquant/"
 reads <- load_samples(sample1,sample2, group1="D0",group2="D7")
 
 PAS_data <- PAS_calling(gene_reference,reads,cores=5,direct_RNA = T)
@@ -32,9 +29,11 @@ write.table(PAU_data,file="../../PAU_by_sample_hES_0.01_D7_D0.tsv",quote = F,col
 
 APA_data <- APA_profile(gene_reference,reads,control="D0",experimental="D7", cores = 5, direct_RNA = T)
 
+
+#########now the APA_plot function will save the plot to the directory insteading of showing in the plot panel#########
 APA_gene_table <- APA_plot(APA_data)
 
-gene_explore(gene_reference, reads,c("JAG1","ENSG00000088766","SLC2A10"),
+gene_explore(gene_reference, reads,c("GART","ENSG00000185658","ZBTB21"),
              control="D0",experimental="D7", APA_table = APA_data, direct_RNA = T)
 write.table(APA_data,file="../../APA_data_hES_0.01_D7_D0.tsv",quote = F,col.names = T, row.names = F,sep = "\t")
 write.table(APA_gene_table,file="../../APA_gene_table_hES_0.01_D7_D0.tsv",quote = F,col.names = T, row.names = F,sep = "\t")

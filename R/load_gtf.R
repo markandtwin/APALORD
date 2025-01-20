@@ -76,7 +76,9 @@ load_gtf <- function(gtf_file, cores = 1) {
                                mc.cores = cores)
   
   # Combine results
-  exon_reference <- rbindlist(extract_distal)%>% mutate_if(is.character, as.factor)
+  exon_reference <- rbindlist(extract_distal)
+  exon_reference[, c("chrom", "strand") := lapply(.SD, as.factor), .SDcols = c("chrom", "strand")]
+  exon_reference[, c("chromStart", "chromEnd") := lapply(.SD, as.numeric), .SDcols = c("chromStart", "chromEnd")]
   gene_reference <- merge(exon_reference, gene_info, by = "gene_id", all.x =  TRUE)
   gene_reference$gene_id <- gsub('"', '', gene_reference$gene_id)
   gene_reference$gene_name <- gsub('"', '', gene_reference$gene_name)

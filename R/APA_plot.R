@@ -11,6 +11,8 @@ APA_plot <- function(APA_data,P_cutoff=0.05,delta=0.1){
   APA_data <-APA_data[as.numeric(number_of_PAS)>1]
   APA_data$P_adj <-p.adjust(APA_data$pvalue, method = "fdr")
   APA_data$Col <- "gray"
+  APA_data$Vol_P <- (-log10(APA_data$P_adj))
+  APA_data[Vol_P == Inf, Vol_P := -log10(2.2e-16)]
   APA_data$APA_trend <- "no change"
   APA_data[(P_adj < P_cutoff & APA_change > delta), Col := "red"]
   APA_data[(P_adj < P_cutoff & APA_change > delta), APA_trend := "longer"]
@@ -19,11 +21,15 @@ APA_plot <- function(APA_data,P_cutoff=0.05,delta=0.1){
   shortening <- length(subset(APA_data,Col=="blue")$gene_id)
   lengthening <- length(subset(APA_data,Col=="red")$gene_id)
   all <- length(APA_data$gene_id)
-  plot(x=APA_data$APA_change,  y=-log10(APA_data$P_adj), xlim=c(-1,1), 
+  pdf("APA_plot.pdf",7,7)
+  par(mar = c(6, 5, 4, 3) + 0.1)
+  plot(x=APA_data$APA_change,  y=APA_data$Vol_P, xlim=c(-1,1), 
        main ="APA trend (experimental vs control)",  
        pch= 20, sub = paste(shortening,"shortened","and",lengthening,"lengthend" ,"in all", all, "events",sep=" "),
        xlab = "APA change (experimental - control)",  ylab = "-log10(adjusted p value)",  col = APA_data$Col, cex=0.7)
   abline(v = c(-delta,delta), col = "green", lty = 2, lwd = 2)
   abline(h=(-log10(P_cutoff)), col = "green", lty = 2, lwd = 2)
-  return(APA_data[, !c("Col"), with = FALSE])
+  dev.off()
+  
+  return(APA_data[, !c("Col","Vol_P"), with = FALSE])
 }
