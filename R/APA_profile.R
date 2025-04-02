@@ -7,7 +7,7 @@
 #' @param control which group in the data is used as the control group
 #' @param experimental which group in the data is used as the experimental group
 #' @param direct_RNA whether the data is direct RNAseq, TRUE or FALSE 
-#' @param min_counts minium read counts required for both samples at single gene level to perform the analysis
+#' @param min_counts minium read counts required for both groups at single gene level to perform the analysis
 #' @param min_reads minium read counts required for PAS calling
 #' @param min_percent  minium PAU for a PAS to be considered for downstream analysis
 #' @param cores number of threads used for the computation
@@ -50,18 +50,50 @@ APA_profile <- function(gene_reference, reads, control, experimental,
       peaks_df <- peaks_df[order(Value)]
       
       df <- peaks_df[order(peaks_df$Value), ]
-      group <- cumsum(c(TRUE, diff(df$Value) > 20))  # Group peaks
-      
-      # Combine peak groups
-      combined_df <- rbindlist(lapply(split(df, group), function(group_data) {
-        max_density_row <- group_data[which.max(group_data$Density), ]
-        max_density_row$Frequency <- sum(group_data$Frequency)
-        max_density_row$Density <- sum(group_data$Density)
-        return(max_density_row)
-      }))
+      # Group peaks
+      if (nrow(df)>1){
+        group <- integer(nrow(df))
+        current_group <- 1
+        group[1] <- current_group
+        rep_val <- df$Value[1]
+        # Assign groups: start a new group when a value exceeds min_val + threshold
+        for (i in 2:nrow(df)) {
+          group_df <- df[which(group==current_group),]
+          rep_val <- group_df[which.max(group_df$Frequency),"Value"]
+          if (df$Value[i] - rep_val > 20) {
+            current_group <- current_group + 1
+          }
+          group[i] <- current_group
+        }
+        
+        
+        # Combine peak groups
+        combined_df <- rbindlist(lapply(split(df, group), function(group_data) {
+          max_density_row <- group_data[which.max(group_data$Density), ]
+          max_density_row$Frequency <- sum(group_data$Frequency)
+          max_density_row$Density <- sum(group_data$Density)
+          return(max_density_row)
+        }))
+      } else {
+        combined_df <-df
+      }
       
       call_df <- combined_df[combined_df$Density >= min_percent & combined_df$Frequency > 2, ]
-      call_df <- call_df[order(call_df$Density, decreasing = TRUE), ]
+      call_df <- call_df[order(call_df$Value, decreasing = FALSE), ]
+      
+      if (nrow(call_df)>1){
+        marks<-vector()
+        for (i in 1:(nrow(call_df)-1)) {
+          diff <- call_df[i+1,]$Value - call_df[i,]$Value  # Since values are ordered, subtraction works directly
+          if (diff < 20*2) {
+            m <- ifelse(call_df[i,]$Frequency < call_df[i+1,]$Frequency, i, i+1)
+            marks <- append(marks, m)
+          }
+        }
+        if (length(marks)>0){
+          call_df <- call_df[-marks,]
+        }
+      }
       
       if (nrow(call_df) > 0) {
         call_df[, Density := round(Density, 2)]
@@ -81,55 +113,67 @@ APA_profile <- function(gene_reference, reads, control, experimental,
       gene_all <- gene_all[strand == gene_info[gene, strand]]
     }
     
-    if (all(table(gene_all$sample)>=min_counts)) {
+    if (all(table(gene_all$treatment)>=min_counts)) {
       strand <- gene_info[gene, strand]
       if (strand == "+") {
         control_3end <- gene_all[treatment == control, chromEnd]
         experimental_3end <- gene_all[treatment == experimental, chromEnd]
-        test_ks_less <- ks.test(control_3end, experimental_3end, alternative = "less")
-        test_ks_greater <- ks.test(control_3end, experimental_3end, alternative = "greater")
-        APA_gene$pvalue <- min(test_ks_greater$p.value, test_ks_less$p.value)
-        APA_gene$distance <- max(test_ks_greater$statistic, test_ks_less$statistic)
       } else {
-        control_3end <- gene_all[treatment == control, chromStart]
-        experimental_3end <- gene_all[treatment == experimental, chromStart]
-        test_ks_less <- ks.test(experimental_3end,control_3end ,alternative = "less")
-        test_ks_greater <- ks.test(experimental_3end,control_3end ,alternative = "greater")
-        APA_gene$pvalue <- min(test_ks_greater$p.value, test_ks_less$p.value)
-        APA_gene$distance <- max(test_ks_greater$statistic, test_ks_less$statistic)
+        control_3end <- (gene_all[treatment == control, chromStart]+1)
+        experimental_3end <- (gene_all[treatment == experimental, chromStart]+1)
       }
-      if (test_ks_greater$p.value < test_ks_less$p.value) {
-        APA_gene$APA_change <- APA_gene$distance
-      } else if (test_ks_greater$p.value > test_ks_less$p.value) {
-        APA_gene$APA_change <- -APA_gene$distance
-      } else {
-        APA_gene$APA_change <- 0
-      }
+      
       
       df_3end <- c(control_3end, experimental_3end)
       PAS_info <- PAS_fun(df_3end, min_percent, min_reads)
+      if (is.null(PAS_info)){
+        n_PAS <- 0
+      } else {
+        n_PAS <-length(as.numeric(unlist(strsplit(PAS_info[2], ","))))
+      }
       
-      if (!is.null(PAS_info)) {
+      if ((n_PAS>=2)&(all(table(gene_all$sample)>=min_reads))) {
         PASs_gene <- as.numeric(unlist(strsplit(PAS_info[2], split = ",")))
-        PAUs_control <- round(sapply(PASs_gene, function(x) mean(abs(control_3end - x) <= 20) * 100), 2)
-        reads_control <- sapply(PASs_gene, function(x) sum(abs(control_3end - x) <= 20))
-        PAUs_experimental <- round(sapply(PASs_gene, function(x) mean(abs(experimental_3end - x) <= 20) * 100), 2)
-        reads_experimental <- sapply(PASs_gene, function(x) sum(abs(experimental_3end - x) <= 20))
+        for (PAS in PASs_gene){
+          control_3end[abs(control_3end - PAS) <= 20] <- PAS
+          experimental_3end[abs(experimental_3end - PAS) <= 20] <- PAS
+        }
+        reads_control <- table(control_3end[control_3end %in% PASs_gene])
+        reads_control <- c(reads_control, setNames(rep(0, length(PASs_gene) - length(reads_control)), PASs_gene[!PASs_gene %in% names(reads_control)]))
+        reads_control <-  reads_control[order(names(reads_control))]
+        PAUs_control <- round(100*reads_control/length(control_3end),2)
+        reads_experimental <- table(experimental_3end[experimental_3end %in% PASs_gene])
+        reads_experimental <- c(reads_experimental, setNames(rep(0, length(PASs_gene) - length(reads_experimental)), PASs_gene[!PASs_gene %in% names(reads_experimental)]))
+        reads_experimental <-  reads_experimental[order(names(reads_experimental))]
+        PAUs_experimental <- round(100*reads_experimental/length(experimental_3end),2)
         PAU_changes <- round(PAUs_experimental - PAUs_control, 2)
         APA_gene[,c("number_of_PAS","PAS_coordinates","PAS_read_counts","PAS_PAUs") := as.list(PAS_info)]
-        APA_gene[, c("PAUs_control", "PAUs_experimental", "PAU_changes") := as.list(c(paste(PAUs_control, collapse = ","),
+        APA_gene[, c(paste0("PAUs_",control,sep=""), paste0("PAUs_",experimental,sep=""), "PAU_changes") := as.list(c(paste(PAUs_control, collapse = ","),
                                                                                       paste(PAUs_experimental, collapse = ","),paste(PAU_changes, collapse = ",")))]
-        APA_gene[, c("reads_control", "reads_experimental") := as.list(c(paste(reads_control, collapse = ","),paste(reads_experimental, collapse = ",")))]
-        if (as.numeric(PAS_info[1]) > 1) {
-          if((strand=="-")&&(PASs_gene[length(PASs_gene)]<APA_gene[,"last_exon_chromEnd"])){
-            APA_gene[,"APA_type"] <- "Last_exon_tandem_APA"
-          }
-          else if((strand=="+")&&(PASs_gene[1]>APA_gene[,"last_exon_chromStart"])){
-            APA_gene[,"APA_type"] <- "Last_exon_tandem_APA"
-          }
-          else {
-            APA_gene[,"APA_type"] <- "Mixed_APA"
-          }
+        APA_gene[, c(paste0("reads_",control,sep=""), paste0("reads_",experimental,sep="")) := as.list(c(paste(reads_control, collapse = ","),paste(reads_experimental, collapse = ",")))]
+        if (strand == "+") {
+          test_ks_less <- ks.test(control_3end, experimental_3end, alternative = "less")
+          test_ks_greater <- ks.test(control_3end, experimental_3end, alternative = "greater")
+        } else {
+          test_ks_less <- ks.test(experimental_3end,control_3end ,alternative = "less")
+          test_ks_greater <- ks.test(experimental_3end,control_3end ,alternative = "greater")
+        }
+        if (test_ks_greater$statistic > test_ks_less$statistic) {
+          APA_gene$APA_change <- test_ks_greater$statistic
+          APA_gene$pvalue <- test_ks_greater$p.value
+        } else if (test_ks_greater$statistic < test_ks_less$statistic) {
+          APA_gene$APA_change <- (-test_ks_less$statistic)
+          APA_gene$pvalue <- test_ks_less$p.value
+        } else {
+          APA_gene$APA_change <- 0
+          APA_gene$pvalue <- min(test_ks_less$p.value,test_ks_greater$p.value)
+        }
+        if((strand=="-")&&(PASs_gene[length(PASs_gene)]<APA_gene[,"last_exon_chromEnd"])){
+          APA_gene[,"APA_type"] <- "Last_exon_tandem_APA"
+        } else if((strand=="+")&&(PASs_gene[1]>APA_gene[,"last_exon_chromStart"])){
+          APA_gene[,"APA_type"] <- "Last_exon_tandem_APA"
+        } else {
+          APA_gene[,"APA_type"] <- "Mixed_APA"
         }
         return(APA_gene)
       }
@@ -142,6 +186,6 @@ APA_profile <- function(gene_reference, reads, control, experimental,
   # Combine the results
   output_df <- rbindlist(output, fill = T)
   output_df$number_of_PAS <- as.numeric(output_df$number_of_PAS)
-  output_df <- output_df[, !c("last_exon_chromStart", "last_exon_chromEnd","distance"), with = FALSE]
+  output_df <- output_df[, !c("last_exon_chromStart", "last_exon_chromEnd"), with = FALSE]
   return(output_df)
 }

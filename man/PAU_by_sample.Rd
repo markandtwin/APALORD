@@ -18,7 +18,7 @@ PAU_by_sample(
 
 \item{reads}{information from RNAseq samples}
 
-\item{min_reads}{minium reads count required at single gene level for PAS calling}
+\item{min_reads}{minium reads count required at single gene level for PAS calling and PAU calculation}
 
 \item{min_percent}{minium percent required for a PAS to be included (0-100)}
 
@@ -27,7 +27,7 @@ PAU_by_sample(
 \item{direct_RNA}{whether or not the data is direct RNAseq}
 }
 \value{
-a table showing the top PASs for each single gene with enough depth in the data and also a bed6 file table for all the PASs
+a table showing the uasage of top PASs for each single gene with enough depth in the dataset of each sample
 }
 \description{
 This function extract PolyA sites information of each gene and calculate the usage of each found PAS from the provided RNAseq data.

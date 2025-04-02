@@ -5,11 +5,10 @@
 #' @param gene_reference information extracted from gtf file
 #' @param reads information from RNAseq samples
 #' @param cores number of threads used for the computation
-#' @param min_reads minium reads count required at single gene level for PAS calling
+#' @param min_reads minium reads count required at single gene level for PAS calling and PAU calculation
 #' @param min_percent minium percent required for a PAS to be included (0-100)
 #' @param direct_RNA whether or not the data is direct RNAseq 
-#' @return a table showing the top PASs for each single gene with enough depth in the data and also a bed6 file table for all the PASs
-#' @export
+#' @return a table showing the uasage of top PASs for each single gene with enough depth in the dataset of each sample 
 
 PAU_by_sample <- function(gene_reference, reads, min_reads=5, min_percent=1, cores=1, direct_RNA=F) {
   gene_info <- gene_reference[,c(1:2, 5:6)]
@@ -17,7 +16,7 @@ PAU_by_sample <- function(gene_reference, reads, min_reads=5, min_percent=1, cor
   setkey(reads_dt, gene_id)
   
   # Pre-filter the reads
-  reads_dt <- reads_dt[unique(reads_dt[,.N, by = gene_id][N >= min_reads]$gene_id)]  # Filter genes with fewer than min_reads
+  reads_dt <- reads_dt[gene_id%in%unique(reads_dt[,.N, by = gene_id][N >= min_reads]$gene_id)]  # Filter genes with fewer than min_reads
   genes <- unique(reads_dt$gene_id)
   genes <- as.vector(genes[genes != "."])
   
@@ -31,8 +30,7 @@ PAU_by_sample <- function(gene_reference, reads, min_reads=5, min_percent=1, cor
     
     # Direct RNA filtering
     if (direct_RNA) {
-      strand <- PAS_table[gene, strand]
-      gene_all <- gene_all[strand == strand]
+      gene_all <- gene_all[strand == gene_info[gene, strand]]
     }
     
     # Handle strand-specific processing
@@ -40,7 +38,7 @@ PAU_by_sample <- function(gene_reference, reads, min_reads=5, min_percent=1, cor
     if (strand == "+") {
       df_3end <- gene_all$chromEnd
     } else {
-      df_3end <- gene_all$chromStart
+      df_3end <- (gene_all$chromStart+1)
     }
     
     # Calculate frequency table and density
@@ -56,36 +54,72 @@ PAU_by_sample <- function(gene_reference, reads, min_reads=5, min_percent=1, cor
       )
       
       df <- peaks_df[order(peaks_df$Value), ]
-      group <- cumsum(c(TRUE, diff(df$Value) > 20))  # Group peaks
-      
-      # Combine peak groups
-      combined_df <- rbindlist(lapply(split(df, group), function(group_data) {
-        max_density_row <- group_data[which.max(group_data$Density), ]
-        max_density_row$Frequency <- sum(group_data$Frequency)
-        max_density_row$Density <- sum(group_data$Density)
-        return(max_density_row)
-      }))
-      
+      # Group peaks
+      if (nrow(df)>1){
+        group <- integer(nrow(df))
+        current_group <- 1
+        group[1] <- current_group
+        rep_val <- df$Value[1]
+        # Assign groups: start a new group when a value exceeds min_val + threshold
+        for (i in 2:nrow(df)) {
+          group_df <- df[which(group==current_group),]
+          rep_val <- group_df[which.max(group_df$Frequency),"Value"]
+          if (df$Value[i] - rep_val > 20) {
+            current_group <- current_group + 1
+          }
+          group[i] <- current_group
+        }
+        
+        
+        # Combine peak groups
+        combined_df <- rbindlist(lapply(split(df, group), function(group_data) {
+          max_density_row <- group_data[which.max(group_data$Density), ]
+          max_density_row$Frequency <- sum(group_data$Frequency)
+          max_density_row$Density <- sum(group_data$Density)
+          return(max_density_row)
+        }))
+      } else {
+        combined_df <-df
+      }
       call_df <- combined_df[combined_df$Density >= min_percent & combined_df$Frequency > 2, ]
-      call_df <- call_df[order(call_df$Density, decreasing = TRUE), ]
+      call_df <- call_df[order(call_df$Value, decreasing = F), ]
+      
+      if (nrow(call_df)>1){
+        marks<-vector()
+        for (i in 1:(nrow(call_df)-1)) {
+          diff <- call_df[i+1,]$Value - call_df[i,]$Value  # Since values are ordered, subtraction works directly
+          if (diff < 20*2) {
+            m <- ifelse(call_df[i,]$Frequency < call_df[i+1,]$Frequency, i, i+1)
+            marks <- append(marks, m)
+          }
+        }
+        if (length(marks)>0){
+          call_df <- call_df[-marks,]
+        }
+      }
       
       if (nrow(call_df) > 0) {
         call_df$Density <- round(call_df$Density, 2)
         PAS_gene <- PAS_table[gene, 1:4][rep(1, nrow(call_df)),]
         PAS_gene$PAS <- call_df$Value
+        samples <- unique(reads_dt$sample)
         
         # Parallelize per sample
         if (all(table(gene_all$sample)>=min_reads)) {
-          for (sample_name in as.vector(levels(reads_dt$sample))) {
+          for (sample_name in samples) {
             sample_df <- gene_all[sample == sample_name]
             if (strand == "+") {
-              PAS_gene[, sample_name] <- round(sapply(call_df$Value, function(x) {
+              PAS_gene[, paste(sample_name,"PAU")] <- round(sapply(call_df$Value, function(x) {
                 mean(abs(sample_df$chromEnd - x) <= 20) * 100
               }), 2)
+              PAS_gene[, paste(sample_name,"reads")] <- sapply(call_df$Value, function(x) {
+                sum(abs(sample_df$chromEnd - x) <= 20)})
             } else {
-              PAS_gene[, sample_name] <- round(sapply(call_df$Value, function(x) {
+              PAS_gene[, paste(sample_name,"PAU")] <- round(sapply(call_df$Value, function(x) {
                 mean(abs(sample_df$chromStart - x) <= 20) * 100
               }), 2)
+              PAS_gene[, paste(sample_name,"reads")] <- sapply(call_df$Value, function(x) {
+                sum(abs(sample_df$chromStart - x) <= 20)})
             }
           }
           return(PAS_gene)

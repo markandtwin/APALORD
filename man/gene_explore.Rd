@@ -4,15 +4,7 @@
 \alias{gene_explore}
 \title{Visualize the 3'ends of all the reads in each sample for an individual gene and the PAUs for each polyA site from each group/sample}
 \usage{
-gene_explore(
-  gene_reference,
-  reads,
-  gene_list,
-  APA_table,
-  control,
-  experimental,
-  direct_RNA = FALSE
-)
+gene_explore(gene_reference, reads, gene_list, APA_table, direct_RNA = FALSE)
 }
 \arguments{
 \item{gene_reference}{information extracted from gtf file}
@@ -22,10 +14,6 @@ gene_explore(
 \item{gene_list}{name or id of a list of genes of interest}
 
 \item{APA_table}{output from APA_profile analysis}
-
-\item{control}{which group in the data is used as the control group}
-
-\item{experimental}{which group in the data is used as the experimental group}
 
 \item{direct_RNA}{whether the data is direct RNAseq, TRUE or FALSE}
 }

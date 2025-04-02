@@ -25,7 +25,7 @@ APA_profile(
 
 \item{experimental}{which group in the data is used as the experimental group}
 
-\item{min_counts}{minium read counts required for both samples at single gene level to perform the analysis}
+\item{min_counts}{minium read counts required for both groups at single gene level to perform the analysis}
 
 \item{min_reads}{minium read counts required for PAS calling}
 

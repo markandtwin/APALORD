@@ -17,7 +17,7 @@ PAS_calling <- function(gene_reference, reads,min_reads=5, min_percent=1,cores=1
   setkey(reads_dt, gene_id)
   
   # Pre-filter the reads
-  reads_dt <- reads_dt[unique(reads_dt[,.N, by = gene_id][N >= min_reads]$gene_id)]  # Filter genes with fewer than min_reads
+  reads_dt <- reads_dt[gene_id%in%unique(reads_dt[,.N, by = gene_id][N >= min_reads]$gene_id)]  # Filter genes with fewer than min_reads
   genes <- unique(reads_dt$gene_id)
   genes <- as.vector(genes[genes != "."])
   
@@ -31,8 +31,7 @@ PAS_calling <- function(gene_reference, reads,min_reads=5, min_percent=1,cores=1
     
     # Direct RNA filtering
     if (direct_RNA) {
-      strand <- PAS_table[gene, strand]
-      gene_all <- gene_all[strand == strand]
+      gene_all <- gene_all[strand == gene_info[gene, strand]]
     }
     
     # Handle strand-specific processing
@@ -40,7 +39,7 @@ PAS_calling <- function(gene_reference, reads,min_reads=5, min_percent=1,cores=1
     if (strand == "+") {
       df_3end <- gene_all$chromEnd
     } else {
-      df_3end <- gene_all$chromStart
+      df_3end <- gene_all$chromStart+1
     }
     
     # Calculate frequency table and density
@@ -56,42 +55,64 @@ PAS_calling <- function(gene_reference, reads,min_reads=5, min_percent=1,cores=1
       )
       
       df <- peaks_df[order(peaks_df$Value), ]
-      group <- cumsum(c(TRUE, diff(df$Value) > 20))  # Group peaks
-      
-      # Combine peak groups
-      combined_df <- rbindlist(lapply(split(df, group), function(group_data) {
-        max_density_row <- group_data[which.max(group_data$Density), ]
-        max_density_row$Frequency <- sum(group_data$Frequency)
-        max_density_row$Density <- sum(group_data$Density)
-        return(max_density_row)
-      }))
+      # Group peaks
+      if (nrow(df)>1){
+        group <- integer(nrow(df))
+        current_group <- 1
+        group[1] <- current_group
+        rep_val <- df$Value[1]
+        # Assign groups: start a new group when a value exceeds min_val + threshold
+        for (i in 2:nrow(df)) {
+          group_df <- df[which(group==current_group),]
+          rep_val <- group_df[which.max(group_df$Frequency),"Value"]
+          if (df$Value[i] - rep_val > 20) {
+            current_group <- current_group + 1
+          }
+          group[i] <- current_group
+        }
+        
+        
+        # Combine peak groups
+        combined_df <- rbindlist(lapply(split(df, group), function(group_data) {
+          max_density_row <- group_data[which.max(group_data$Density), ]
+          max_density_row$Frequency <- sum(group_data$Frequency)
+          max_density_row$Density <- sum(group_data$Density)
+          return(max_density_row)
+        }))
+      } else {
+        combined_df <-df
+      }
       
       call_df <- combined_df[combined_df$Density >= min_percent & combined_df$Frequency > 2, ]
-      call_df <- call_df[order(call_df$Density, decreasing = TRUE), ]
+      call_df <- call_df[order(call_df$Value, decreasing = F), ]
+      
+      if (nrow(call_df)>1){
+        marks<-vector()
+        for (i in 1:(nrow(call_df)-1)) {
+          diff <- call_df[i+1,]$Value - call_df[i,]$Value  # Since values are ordered, subtraction works directly
+          if (diff < 20*2) {
+            print(diff)
+            m <- ifelse(call_df[i,]$Frequency < call_df[i+1,]$Frequency, i, i+1)
+            marks <- append(marks, m)
+          }
+        }
+        if (length(marks)>0){
+          call_df <- call_df[-marks,]
+        }
+      }
       
       if (nrow(call_df) > 0) {
         call_df$Density <- round(call_df$Density, 2)
         PAS_gene <- PAS_table[gene, 1:4][rep(1, nrow(call_df)),]
         PAS_gene$PAS <- call_df$Value
         add_df<- data.frame(matrix(ncol=6, nrow=(length(call_df$Value))))
-        if(strand=="+"){
-          add_df<-data.frame(
-            chrom = gene_all$chrom[1], # Numeric column
-            start = as.numeric(call_df$Value)-1, # Numeric column
-            end = as.numeric(call_df$Value),
-            name = gene_info[gene,gene_name],
-            density= as.numeric(call_df$Density),
-            strand = gene_info[gene,"strand"])
-        }
-        if(strand=="-"){
-          add_df<-data.frame(
-            chrom = gene_all$chrom[1], # Numeric column
-            start = as.numeric(call_df$Value), # Numeric column
-            end = as.numeric(call_df$Value)+1,
-            name = gene_info[gene,gene_name],
-            density= as.numeric(call_df$Density),
-            strand = strand)
-        }
+        add_df<-data.frame(
+          chrom = gene_all$chrom[1], # Numeric column
+          start = as.numeric(call_df$Value)-1, # Numeric column
+          end = as.numeric(call_df$Value),
+          name = gene_info[gene,gene_name],
+          density= as.numeric(call_df$Density),
+          strand = gene_info[gene,"strand"])
         return(add_df)
       }
     }
