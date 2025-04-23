@@ -1,7 +1,7 @@
-# LR-APA: Alternative Polyadenylation Analysis for Long-Read RNA-seq
+# LRAPA: Alternative Polyadenylation Analysis for Long-Read RNA-seq
 
-`LR-APA` is an R package for analyzing Alternative Polyadenylation (APA) in long-read RNA-seq data. It provides tools to identify polyadenylation sites (PAS), quantify polyadenylation site usage 
-(PAU), perform differential APA analysis, profile cleavage site heterogeneity (CSH), and visualize APA changes across conditions. Optimized for multi-core processing, `LR-APA` is ideal for APA 
+`LRAPA` is an R package for analyzing Alternative Polyadenylation (APA) in long-read RNA-seq data. It provides tools to identify polyadenylation sites (PAS), quantify polyadenylation site usage 
+(PAU), perform differential APA analysis, profile cleavage site heterogeneity (CSH), and visualize APA changes across conditions. Optimized for multi-core processing, `LRAPA` is ideal for APA 
 analysis utilizing long read RNA-seq across conditions.
 
 ## Features
@@ -24,47 +24,47 @@ analysis utilizing long read RNA-seq across conditions.
   - Preprocessed long read RNA-seq data (e.g., output of IsoQuant) for two groups
 
 
-### Install LR-APA
+### Install LRAPA
 
 1. **Install from GitHub**:
 
    ```R
    install.packages("devtools")
-   devtools::install_github("markandtwin/LR-APA")
+   devtools::install_github("markandtwin/LRAPA")
    ```
 
 2. **Verify Installation**:
 
    ```R
-   library(LR-APA)
+   library(LRAPA)
    ```
 
 Alternatively, clone the repository and install locally:
 
 ```bash
-git clone https://github.com/markandtwin/LR-APA.git
-cd LR-APA
+git clone https://github.com/markandtwin/LRAPA.git
+cd LRAPA
 ```
 And then install it in R:
 
    ```R
-   devtools::install("PATH to /LR-APA")
+   devtools::install("PATH to /LRAPA")
    ```
 ## Usage
 
-The following example demonstrates the `LR-APA` workflow using the package’s example data for hESC (D0) and hESC-derived neuron (D7) samples. Each step is presented as a separate R code chunk, which 
+The following example demonstrates the `LRAPA` workflow using the package’s example data for hESC (D0) and hESC-derived neuron (D7) samples. Each step is presented as a separate R code chunk, which 
 can be combined into a script (`scripts/APA_analysis.R`) for a pipeline execution. 
 
 ### Example Workflow
 
-To run the full workflow, create a script (`scripts/apa_analysis.R`) by combining the chunks below, or execute them individually in an R session.
+To run the full workflow, create a script (`scripts/APA_analysis.R`) by combining the chunks below, or execute them individually in an R session.
 
 #### Step 0: Initialize Environment
 
 ```R
-# Initialize LR-APA workflow
+# Initialize LRAPA workflow
 # - Load package and create output directory
-library(LR-APA)
+library(LRAPA)
 
 # Set output directory
 out_dir <- "results"
@@ -76,7 +76,7 @@ out_dir <- "results"
 # Load GTF annotation
 # - Use hg38_chr21.gtf.gz for gene annotations
 # - Validate file existence and use 5 cores for parallel processing
-extdata_path <- system.file("extdata", package = "LR-APA")
+extdata_path <- system.file("extdata", package = "LRAPA")
 gtf_file <- paste0(extdata_path, "/hg38_chr21.gtf.gz")
 gene_reference <- load_gtf(gtf_file, cores = 5)
 ```
@@ -137,9 +137,9 @@ This step is using DEXSeq to call differentially expressed PAS between the two g
 # Distal/proximal PAS shifts
 # - Examine shifts in distal and proximal PAS usage
 
-dPAU_test_data <- LR-APA::end_PAS_examine(PAU_data, reads, P_cutoff = 0.2,
+dPAU_test_data <- LRAPA::end_PAS_examine(PAU_data, reads, P_cutoff = 0.2,
                                          control = "D0", experimental = "D7", position = "distal", type = "FC")
-pPAU_test_data <- LR-APA::end_PAS_examine(PAU_data, reads, P_cutoff = 0.2,
+pPAU_test_data <- LRAPA::end_PAS_examine(PAU_data, reads, P_cutoff = 0.2,
                                          control = "D0", experimental = "D7", position = "proximal", type = "delta")
 ```
 
@@ -184,9 +184,9 @@ write.table(CSH_test, file = csh_file, quote = FALSE, col.names = TRUE, row.name
 
 ### Running the Workflow
 
-To execute the full workflow, combine the chunks into `scripts/apa_analysis.R` and run:
+To execute the full workflow, combine the chunks into `scripts/APA_analysis.R` and run:
 
-```R
+```bash
 Rscript scripts/apa_analysis.R
 ```
 
@@ -200,26 +200,12 @@ The workflow generates files in the `results/` directory:
 - `PAS_D7_D0.bed`: Polyadenylation sites in BED format.
 - `PAU_by_sample_D7_D0.tsv`: PAU per sample.
 - `hESC_PAU_test_data_all.tsv`: Differential PAU test results.
-- `APA_data_hES_0.01_D7_D0.tsv`: APA profiles.
+- `APA_data_hES_D7_D0.tsv`: APA profiles.
 - `APA_gene_table_hES_0.01_D7_D0.tsv`: APA gene table from plots.
 - `CSH_gene_table_hES_D0_D7.tsv`: CSH analysis results.
-- Plots from `APA_plot` and `CSH_plot` saved to `results/`.
+- Plots from `APA_plot` and `CSH_plot` in `Plots`.
 
-## Directory Structure
 
-```
-├── R/                              # R source code for LR-APA functions
-├── man/                            # Function documentation
-├── extdata/                        # Example data (GTF, sample reads)
-├── scripts/                        # Example scripts
-│   ├── apa_analysis.R              # Workflow script
-├── tests/                          # Unit tests
-├── results/                        # Output directory
-├── DESCRIPTION                     # Package metadata
-├── NAMESPACE                       # Package namespace
-├── README.md                       # This file
-└── LICENSE                         # License file
-```
 
 ## Notes
 
@@ -267,4 +253,4 @@ sample:
 
 ## Citation
 
-If you use `LR-APA` in your research, please cite [INSERT CITATION OR PLACEHOLDER].
+If you use `LRAPA` in your research, please cite [INSERT CITATION OR PLACEHOLDER].
