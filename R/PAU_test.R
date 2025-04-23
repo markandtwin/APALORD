@@ -6,6 +6,7 @@
 #' @param reads information from RNAseq samples that was used to get the PAU data
 #' @param P_cutoff cutoff of adjusted P value to be considered significant
 #' @return a table showing the usage of top PASs for each single gene with enough depth in the dataset of each sample 
+#' @export
 
 PAU_test <- function(PAU_data,reads, P_cutoff=0.05, FC_cutoff=1){
   groupID <- PAU_data$gene_id

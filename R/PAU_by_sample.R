@@ -9,6 +9,7 @@
 #' @param min_percent minium percent required for a PAS to be included (0-100)
 #' @param direct_RNA whether or not the data is direct RNAseq 
 #' @return a table showing the uasage of top PASs for each single gene with enough depth in the dataset of each sample 
+#' @export
 
 PAU_by_sample <- function(gene_reference, reads, min_reads=5, min_percent=1, cores=1, direct_RNA=F) {
   gene_info <- gene_reference[,c(1:2, 5:6)]

@@ -30,13 +30,14 @@ analysis utilizing long read RNA-seq across conditions.
 
    ```R
    install.packages("devtools")
-   devtools::install_github("markandtwin/LRAPA")
+   devtools::install_github("markandtwin/LRAPA",build_vignettes = TRUE)
    ```
 
-2. **Verify Installation**:
+2. **Verify Installation and Browse the Vignettes**:
 
    ```R
    library(LRAPA)
+   browseVignettes(package = "LRAPA")
    ```
 
 Alternatively, clone the repository and install locally:
@@ -45,10 +46,12 @@ Alternatively, clone the repository and install locally:
 git clone https://github.com/markandtwin/LRAPA.git
 cd LRAPA
 ```
-And then install it in R:
+And then install it in R and browse the Vignettes:
 
    ```R
-   devtools::install("PATH to /LRAPA")
+   devtools::install("PATH to /LRAPA", build_vignettes = TRUE)
+   library(LRAPA)
+   browseVignettes(package = "LRAPA")
    ```
 ## Usage
 

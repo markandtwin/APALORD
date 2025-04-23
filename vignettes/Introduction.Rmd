@@ -16,9 +16,7 @@ vignette: >
         warning = FALSE)
     ```
 
-`LRAPA` is an R package for analyzing Alternative Polyadenylation (APA) in long-read RNA-seq data. It provides tools to identify polyadenylation sites (PAS), quantify polyadenylation site usage 
-(PAU), perform differential APA analysis, profile cleavage site heterogeneity (CSH), and visualize APA changes across conditions. Optimized for multi-core processing, `LRAPA` is ideal for APA 
-analysis utilizing long-read RNA-seq across conditions.
+`LRAPA` is an R package for analyzing Alternative Polyadenylation (APA) in long-read RNA-seq data. It provides tools to identify polyadenylation sites (PAS), quantify polyadenylation site usage (PAU), perform differential APA analysis, profile cleavage site heterogeneity (CSH), and visualize APA changes across conditions. Optimized for multi-core processing, `LRAPA` is ideal for APA analysis utilizing long-read RNA-seq across conditions.
 
 ## Features
 
@@ -45,13 +43,14 @@ analysis utilizing long-read RNA-seq across conditions.
 
    ```{r eval=FALSE}
    install.packages("devtools")
-   devtools::install_github("markandtwin/LRAPA")
+   devtools::install_github("markandtwin/LRAPA",build_vignettes = TRUE)
    ```
 
-2. **Verify Installation**:
+2. **Verify Installation and check the Vignettes**:
 
    ```{r eval=FALSE}
    library(LRAPA)
+   browseVignettes(package = "LRAPA")
    ```
 
 Alternatively, clone the repository and install locally:
@@ -61,16 +60,17 @@ git clone https://github.com/markandtwin/LRAPA.git
 cd LRAPA
 ```
 
-And then install it in R:
+And then install it in R and check the Vignettes:
 
    ```{r eval=FALSE}
-   devtools::install("/path/to/LRAPA")
+   devtools::install("/path/to/LRAPA",build_vignettes = TRUE)
+   library(LRAPA)
+   browseVignettes(package = "LRAPA")
    ```
 
 ## Usage
 
-The following example demonstrates the `LRAPA` workflow using the package’s example data for human embryonic stem cells (hESC, D0) and hESC-derived neurons (D7) samples. Each step is presented as a 
-separate R code chunk, which can be combined into a script (`scripts/APA_analysis.R`) for pipeline execution.
+The following example demonstrates the `LRAPA` workflow using the package’s example data for human embryonic stem cells (hESC, D0) and hESC-derived neurons (D7) samples. Each step is presented as a separate R code chunk, which can be combined into a script (`scripts/APA_analysis.R`) for pipeline execution.
 
 ### Example Workflow
 
@@ -226,8 +226,7 @@ The workflow generates files in the `results/` directory:
 
 ## Notes
 
-- **Custom Data**: Use your own IsoQuant output files by updating paths. Ensure that the `OUT.corrected_reads.bed` and `OUT.read_assignments.tsv` files are found in the provided paths for each 
-sample:
+- **Custom Data**: Use your own IsoQuant output files by updating paths. Ensure that the `OUT.corrected_reads.bed` and `OUT.read_assignments.tsv` files are found in the provided paths for each sample:
 
   ```{r eval=FALSE}
   sample1 <- c("/path/to/Condition_A_rep1_IsoQuant_OUT", "/path/to/Condition_A_rep2_IsoQuant_OUT", "/path/to/Condition_A_rep3_IsoQuant_OUT")
@@ -239,8 +238,7 @@ sample:
   ```bash
   samtools sort sample1.bam -o sample1.sorted.bam
   samtools index sample1.sorted.bam
-  isoquant.py --out sample1.isoquant --genedb /path/to/annotation.gtf --reference /path/to/genome.fasta --complete_genedb --data_type nanopore --bam sample1.sorted.bam --threads 7 
---gene_quantification unique_only --transcript_quantification unique_only --splice_correction_strategy default_ont --no_secondary
+  isoquant.py --out sample1.isoquant --genedb /path/to/annotation.gtf --reference /path/to/genome.fasta --complete_genedb --data_type nanopore --bam sample1.sorted.bam --threads 7 --gene_quantification unique_only --transcript_quantification unique_only --splice_correction_strategy default_ont --no_secondary
   ```
 
 
