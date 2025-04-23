@@ -13,6 +13,7 @@
  CSH_profile<- function(reads,PAU_data, control, experimental, min_reads=20, cores=1, direct_RNA=F) {
   reads_dt <- as.data.table(reads)
   setkey(reads_dt, gene_id)
+  PAU_table <- PAU_data
   PAU_table[,"PAS_name"] <- paste0(PAU_table$gene_id,":",PAU_table$PAS,sep="")
   PASs <- unique(PAU_table$PAS_name)
   setkey(PAU_table, PAS_name)
