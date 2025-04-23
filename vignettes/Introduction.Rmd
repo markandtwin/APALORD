@@ -84,7 +84,10 @@ To run the full workflow, create a script (`scripts/APA_analysis.R`) by combinin
 library(LRAPA)
 
 # Set output directory
-out_dir <- "../results"
+out_dir <- "./results"
+if (!dir.exists(out_dir)) {
+  dir.create(out_dir, recursive = TRUE)
+}
 ```
 
 #### Step 1: Load GTF Annotation
