@@ -1,14 +1,15 @@
-Package: KSAPA
-Title: Alternative polyadenylation analysis using long read RNAseq data
+Package: LRAPA
+Title: Alternative polyadenylation (APA) analysis using long read RNA-seq data
 Version: 0.1
 Authors@R: 
     person("Zhiping", "Zhang", email= "zhzhang@uchc.edu", role = c("aut", "cre"))
-Description: Using long read RNAseq to catch the alternative Polyadenylation sites and monitor the lengthening or shortening trend of 3'UTRs.
+Description: Using long read RNA-seq to detect the polyadenylation sites (PASs) and monitor the APA change across conditions.
 License: GPL-3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Imports:
+    DEXSeq,
     pbmcapply,
     stringr,
     dplyr,
@@ -21,5 +22,5 @@ Suggests:
     rmarkdown
 VignetteBuilder: knitr
 Depends: 
-    R (>= 3.5)
+    R (>= 4.0)
 

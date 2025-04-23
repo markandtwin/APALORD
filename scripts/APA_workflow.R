@@ -1,11 +1,4 @@
-library(dplyr)
-library(stringr)
-library(tidyr)
-library(pbmcapply)
-library(readr)
-library(data.table)
-library(devtools)
-library(roxygen2)
+
 devtools::install("../KSAPA")
 library(KSAPA)
 #detach("package:KSAPA", unload = TRUE)
