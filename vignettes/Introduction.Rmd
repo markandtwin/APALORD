@@ -1,23 +1,24 @@
 ---
 title: "LRAPA: Alternative Polyadenylation Analysis for Long-Read RNA-seq"
-author: "Zhiping Zhang"
+author: "Zhiping Zhang (University of Connecticut Health Center) zhzhang@uchc.edu"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Introduction to LRAPA}
+  %\VignetteIndexEntry{Introduction}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
-
-  
 ---
+    ```{r setup, include=FALSE}
+        knitr::opts_chunk$set(
+        collapse = TRUE,
+        tidy = TRUE,
+        message=FALSE,
+        warning = FALSE)
+    ```
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
-```
-
-# LRAPA: Alternative Polyadenylation Analysis for Long-Read RNA-seq
-
-`LRAPA` is an R package for analyzing Alternative Polyadenylation (APA) in long-read RNA-seq data. It provides tools to identify polyadenylation sites (PAS), quantify polyadenylation site usage (PAU), perform differential APA analysis, profile cleavage site heterogeneity (CSH), and visualize APA changes across conditions. Optimized for multi-core processing, `LRAPA` is ideal for APA analysis utilizing long-read RNA-seq across conditions.
+`LRAPA` is an R package for analyzing Alternative Polyadenylation (APA) in long-read RNA-seq data. It provides tools to identify polyadenylation sites (PAS), quantify polyadenylation site usage 
+(PAU), perform differential APA analysis, profile cleavage site heterogeneity (CSH), and visualize APA changes across conditions. Optimized for multi-core processing, `LRAPA` is ideal for APA 
+analysis utilizing long-read RNA-seq across conditions.
 
 ## Features
 
@@ -68,7 +69,8 @@ And then install it in R:
 
 ## Usage
 
-The following example demonstrates the `LRAPA` workflow using the package’s example data for human embryonic stem cells (hESC, D0) and hESC-derived neurons (D7) samples. Each step is presented as a separate R code chunk, which can be combined into a script (`scripts/APA_analysis.R`) for pipeline execution.
+The following example demonstrates the `LRAPA` workflow using the package’s example data for human embryonic stem cells (hESC, D0) and hESC-derived neurons (D7) samples. Each step is presented as a 
+separate R code chunk, which can be combined into a script (`scripts/APA_analysis.R`) for pipeline execution.
 
 ### Example Workflow
 
@@ -76,21 +78,18 @@ To run the full workflow, create a script (`scripts/APA_analysis.R`) by combinin
 
 #### Step 0: Initialize Environment
 
-```{r eval=FALSE}
+```{r message=FALSE}
 # Initialize LRAPA workflow
 # - Load package and create output directory
 library(LRAPA)
 
 # Set output directory
 out_dir <- "../results"
-if (!dir.exists(out_dir)) {
-  dir.create(out_dir, recursive = TRUE)
-}
 ```
 
 #### Step 1: Load GTF Annotation
 
-```{r eval=FALSE}
+```{r load gtf}
 # Load GTF annotation
 # - Use hg38_chr21.gtf.gz for gene annotations
 # - Validate file existence and use 5 cores for parallel processing
@@ -101,7 +100,7 @@ gene_reference <- load_gtf(gtf_file, cores = 5)
 
 #### Step 2: Load Samples
 
-```{r eval=FALSE}
+```{r load sample}
 # Load samples
 # - Define paths to IsoQuant output directories for D0 (control) and D7 (experimental) groups
 extdata_path <- system.file("extdata", package = "LRAPA")
@@ -109,12 +108,12 @@ sample1 <- c(paste0(extdata_path, "/D0/rep1"), paste0(extdata_path, "/D0/rep2"),
 sample2 <- c(paste0(extdata_path, "/D7/rep1"), paste0(extdata_path, "/D7/rep2"), paste0(extdata_path, "/D7/rep3"))
 
 reads <- load_samples(sample1, sample2, group1 = "D0", group2 = "D7")
-head(reads)
+head(reads, n=3)
 ```
 
 #### Step 3: PAS Calling (Optional)
 
-```{r eval=FALSE}
+```{r PAS calling}
 # PAS calling
 # - Identify PASs from reads data
 # - Use direct_RNA=TRUE for direct RNA-seq
@@ -130,7 +129,7 @@ This PAS calling output file is in .bed format, so users can load it into IGV or
 
 ##### 4.1: PAU Quantification
 
-```{r eval=FALSE}
+```{r PAU quant}
 # PAU quantification
 # - Quantify polyadenylation usage per sample
 # - Use multiple cores for efficiency
@@ -142,7 +141,7 @@ write.table(PAU_data, file = pau_file, quote = FALSE, col.names = TRUE, row.name
 
 ##### 4.2: Differential PAU Analysis
 
-```{r eval=FALSE}
+```{r fig.width = 5, fig.height = 5, dpi=100, fig.retina=2}
 # Differential PAU analysis
 # - Test for significant PAU changes with P_cutoff=0.05
 
@@ -155,10 +154,10 @@ This step uses DEXSeq to call differentially expressed PAS between the two group
 
 ##### 4.3: Distal/Proximal PAS Shifts (Optional)
 
-```{r eval=FALSE}
+```{r message=FALSE, warning=FALSE, results='hide', fig.show='hide'}
 # Distal/proximal PAS shifts
 # - Examine shifts in distal and proximal PAS usage
-message("Examining distal/proximal PAS shifts...")
+
 dPAU_test_data <- LRAPA::end_PAS_examine(PAU_data, reads, P_cutoff = 0.2,
                                          control = "D0", experimental = "D7", position = "distal", type = "FC")
 pPAU_test_data <- LRAPA::end_PAS_examine(PAU_data, reads, P_cutoff = 0.2,
@@ -167,7 +166,7 @@ pPAU_test_data <- LRAPA::end_PAS_examine(PAU_data, reads, P_cutoff = 0.2,
 
 #### Step 5: APA Profiling
 
-```{r eval=FALSE}
+```{r fig.width = 5, fig.height = 5, dpi=120, fig.retina=2}
 # APA profiling
 # - Generate APA profiles and visualize changes
 
@@ -184,7 +183,7 @@ write.table(APA_gene_table, file = apa_table_file, quote = FALSE, col.names = TR
 
 #### Visualization: Single Gene Exploration
 
-```{r eval=FALSE}
+```{r fig.width = 4, fig.height = 8, dpi=120, fig.retina=2, fig.s}
 # Single gene exploration
 # - Explore APA changes for specific genes
 gene_explore(gene_reference, reads, c("GART"), APA_table = APA_data, direct_RNA = TRUE)
@@ -192,22 +191,21 @@ gene_explore(gene_reference, reads, c("GART"), APA_table = APA_data, direct_RNA 
 
 #### Step 6: CSH Analysis (Additional)
 
-```{r eval=FALSE}
+```{r fig.width = 5.5, fig.height = 5.5, dpi=100, fig.retina=3}
 # CSH analysis
 # - Profile cleavage site heterogeneity and visualize shifts
-message("Profiling CSH shifts...")
+
 CSH_data <- CSH_profile(reads, PAU_data, control = "D0", experimental = "D7", cores = 5, direct_RNA = TRUE)
 CSH_test <- CSH_plot(CSH_data)
 csh_file <- file.path(out_dir, "CSH_gene_table_hES_D0_D7.tsv")
 write.table(CSH_test, file = csh_file, quote = FALSE, col.names = TRUE, row.names = FALSE, sep = "\t")
-message("Saved CSH results: ", csh_file)
 ```
 
 ### Running the Workflow
 
 To execute the full workflow, combine the chunks into `scripts/APA_analysis.R` and run:
 
-```{r eval=FALSE}
+```bash
 Rscript scripts/APA_analysis.R
 ```
 
@@ -228,7 +226,8 @@ The workflow generates files in the `results/` directory:
 
 ## Notes
 
-- **Custom Data**: Use your own IsoQuant output files by updating paths. Ensure that the `OUT.corrected_reads.bed` and `OUT.read_assignments.tsv` files are found in the provided paths for each sample:
+- **Custom Data**: Use your own IsoQuant output files by updating paths. Ensure that the `OUT.corrected_reads.bed` and `OUT.read_assignments.tsv` files are found in the provided paths for each 
+sample:
 
   ```{r eval=FALSE}
   sample1 <- c("/path/to/Condition_A_rep1_IsoQuant_OUT", "/path/to/Condition_A_rep2_IsoQuant_OUT", "/path/to/Condition_A_rep3_IsoQuant_OUT")
@@ -240,16 +239,10 @@ The workflow generates files in the `results/` directory:
   ```bash
   samtools sort sample1.bam -o sample1.sorted.bam
   samtools index sample1.sorted.bam
-  isoquant.py --out sample1.isoquant --genedb /path/to/annotation.gtf --reference /path/to/genome.fasta --complete_genedb --data_type nanopore --bam sample1.sorted.bam --threads 7 --gene_quantification unique_only --transcript_quantification unique_only --splice_correction_strategy default_ont --no_secondary
+  isoquant.py --out sample1.isoquant --genedb /path/to/annotation.gtf --reference /path/to/genome.fasta --complete_genedb --data_type nanopore --bam sample1.sorted.bam --threads 7 
+--gene_quantification unique_only --transcript_quantification unique_only --splice_correction_strategy default_ont --no_secondary
   ```
 
-- **Gene IDs**: Verify gene IDs in `gene_explore` (e.g., `GART`, `ENSG00000185658`, `ZBTB21`) match the GTF file. Map IDs with biomaRt if needed:
-
-  ```{r eval=FALSE}
-  library(biomaRt)
-  ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
-  gene_map <- getBM(attributes = c("ensembl_gene_id", "external_gene_name"), mart = ensembl)
-  ```
 
 - **Direct RNA Sequencing**: The `direct_RNA = TRUE` parameter is set for direct RNA-seq. Default is `FALSE` for other long-read protocols.
 
