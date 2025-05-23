@@ -14,7 +14,9 @@ Imports:
     stringr,
     dplyr,
     tidyr,
-    data.table
+    data.table,
+    BSgenome.Hsapiens.UCSC.hg38,
+    BSgenome
 Suggests: 
     knitr,
     devtools,

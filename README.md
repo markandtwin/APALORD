@@ -1,7 +1,9 @@
-# LRAPA: Alternative Polyadenylation Analysis for Long-Read RNA-seq
+# APALORD: Alternative Polyadenylation Analysis of LOng-ReaDs (APALORD) RNA-seq
 
-`LRAPA` is an R package for analyzing Alternative Polyadenylation (APA) in long-read RNA-seq data. It provides tools to identify polyadenylation sites (PAS), quantify polyadenylation site usage 
-(PAU), perform differential APA analysis, profile cleavage site heterogeneity (CSH), and visualize APA changes across conditions. Optimized for multi-core processing, `LRAPA` is ideal for APA 
+`APALORD` is an R package for analyzing Alternative Polyadenylation (APA) in long-read RNA-seq data. It provides tools to identify polyadenylation sites (PAS), 
+quantify polyadenylation site usage 
+(PAU), perform differential APA analysis, profile cleavage site heterogeneity (CSH), and visualize APA changes across conditions. Optimized for multi-core 
+processing, `APALORD` is ideal for APA 
 analysis utilizing long read RNA-seq across conditions.
 
 ## Features
@@ -24,38 +26,39 @@ analysis utilizing long read RNA-seq across conditions.
   - Preprocessed long read RNA-seq data (e.g., output of IsoQuant) for two groups
 
 
-### Install LRAPA
+### Install APALORD
 
 1. **Install from GitHub**:
 
    ```R
    install.packages("devtools")
-   devtools::install_github("markandtwin/LRAPA",build_vignettes = TRUE)
+   devtools::install_github("markandtwin/APALORD",build_vignettes = TRUE)
    ```
 
 2. **Verify Installation and Browse the Vignettes**:
 
    ```R
-   library(LRAPA)
-   browseVignettes(package = "LRAPA")
+   library(APALORD)
+   browseVignettes(package = "APALORD")
    ```
 
 Alternatively, clone the repository and install locally:
 
 ```bash
-git clone https://github.com/markandtwin/LRAPA.git
-cd LRAPA
+git clone https://github.com/markandtwin/APALORD.git
+cd APALORD
 ```
 And then install it in R and browse the Vignettes:
 
    ```R
-   devtools::install("PATH to /LRAPA", build_vignettes = TRUE)
-   library(LRAPA)
-   browseVignettes(package = "LRAPA")
+   devtools::install("PATH to /APALORD", build_vignettes = TRUE)
+   library(APALORD)
+   browseVignettes(package = "APALORD")
    ```
 ## Usage
 
-The following example demonstrates the `LRAPA` workflow using the package’s example data for hESC (D0) and hESC-derived neuron (D7) samples. Each step is presented as a separate R code chunk, which 
+The following example demonstrates the `APALORD` workflow using the package’s example data for hESC (D0) and hESC-derived neuron (D7) samples. Each step is 
+presented as a separate R code chunk, which 
 can be combined into a script (`scripts/APA_analysis.R`) for a pipeline execution. 
 
 ### Example Workflow
@@ -65,9 +68,9 @@ To run the full workflow, create a script (`scripts/APA_analysis.R`) by combinin
 #### Step 0: Initialize Environment
 
 ```R
-# Initialize LRAPA workflow
+# Initialize APALORD workflow
 # - Load package and create output directory
-library(LRAPA)
+library(APALORD)
 
 # Set output directory
 out_dir <- "./results"
@@ -82,7 +85,7 @@ if (!dir.exists(out_dir)) {
 # Load GTF annotation
 # - Use hg38_chr21.gtf.gz for gene annotations
 # - Validate file existence and use 5 cores for parallel processing
-extdata_path <- system.file("extdata", package = "LRAPA")
+extdata_path <- system.file("extdata", package = "APALORD")
 gtf_file <- paste0(extdata_path, "/hg38_chr21.gtf.gz")
 gene_reference <- load_gtf(gtf_file, cores = 5)
 ```
@@ -109,7 +112,8 @@ PAS_data <- PAS_calling(gene_reference, reads, cores = 5, direct_RNA = TRUE)
 pas_file <- file.path(out_dir, "PAS_D7_D0.bed")
 write.table(PAS_data, file = pas_file, quote = FALSE, col.names = FALSE, row.names = FALSE, sep = "\t")
 ```
-This PAS calling output file is in .bed format, so users can load it into IGV or UCSC genome browser to check it. It's not required by the downstream analysis, so this step is optional. 
+This PAS calling output file is in .bed format, so users can load it into IGV or UCSC genome browser to check it. It's not required by the downstream analysis, so 
+this step is optional. 
 
 #### Step 4: PAU Quantification
 ##### 4.1: PAU Quantification
@@ -143,9 +147,9 @@ This step is using DEXSeq to call differentially expressed PAS between the two g
 # Distal/proximal PAS shifts
 # - Examine shifts in distal and proximal PAS usage
 
-dPAU_test_data <- LRAPA::end_PAS_examine(PAU_data, reads, P_cutoff = 0.2,
+dPAU_test_data <- APALORD::end_PAS_examine(PAU_data, reads, P_cutoff = 0.2,
                                          control = "D0", experimental = "D7", position = "distal", type = "FC")
-pPAU_test_data <- LRAPA::end_PAS_examine(PAU_data, reads, P_cutoff = 0.2,
+pPAU_test_data <- APALORD::end_PAS_examine(PAU_data, reads, P_cutoff = 0.2,
                                          control = "D0", experimental = "D7", position = "proximal", type = "delta")
 ```
 
@@ -196,7 +200,8 @@ To execute the full workflow, combine the chunks into `scripts/APA_analysis.R` a
 Rscript scripts/apa_analysis.R
 ```
 
-Alternatively, run each chunk individually in an R session, ensuring dependencies (e.g., `gene_reference`, `reads`, `PAU_data`, `APA_data`) are available from previous steps.
+Alternatively, run each chunk individually in an R session, ensuring dependencies (e.g., `gene_reference`, `reads`, `PAU_data`, `APA_data`) are available from 
+previous steps.
 
 
 ## Output Files
@@ -215,7 +220,8 @@ The workflow generates files in the `results/` directory:
 
 ## Notes
 
-- **Custom Data**: Use Custom own IsoQuant output files by updating paths. Ensure that the `OUT.corrected_reads.bed` and `OUT.read_assignments.tsv` files could be found in the PATH provided for each 
+- **Custom Data**: Use Custom own IsoQuant output files by updating paths. Ensure that the `OUT.corrected_reads.bed` and `OUT.read_assignments.tsv` files could be 
+found in the PATH provided for each 
 sample:
 
   ```R
@@ -228,7 +234,8 @@ sample:
   ```bash
   samtools sort sample1.bam -o sample1.sorted.bam
   samtools index sample1.sorted.bam
-  isoquant.py --out sample1.isoquant --genedb /path/to/.annotation.gtf --reference /path/to/genome.fasta --complete_genedb --data_type nanopore --bam sample1.sorted.bam --threads 7 
+  isoquant.py --out sample1.isoquant --genedb /path/to/.annotation.gtf --reference /path/to/genome.fasta --complete_genedb --data_type nanopore --bam 
+sample1.sorted.bam --threads 7 
 --gene_quantification unique_only --transcript_quantification unique_only --splice_correction_strategy default_ont --no_secondary
   ```
 
@@ -259,4 +266,5 @@ sample:
 
 ## Citation
 
-If you use `LRAPA` in your research, please cite [INSERT CITATION OR PLACEHOLDER].
+If you use `APALORD` in your research, please cite [INSERT CITATION OR PLACEHOLDER].
+

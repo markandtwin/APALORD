@@ -1,18 +1,25 @@
 #' Call PASs at single gene level and calculate the usage of each found PAS
 #' 
 #' This function extract PolyA sites information of each gene and calculate the usage of each found PAS from the provided RNAseq data.
-#' @import dplyr stringr tidyr pbmcapply data.table
+#' @import dplyr stringr tidyr pbmcapply data.table BSgenome.Hsapiens.UCSC.hg38
 #' @param gene_reference information extracted from gtf file
 #' @param reads information from RNAseq samples
 #' @param cores number of threads used for the computation
 #' @param min_reads minium reads count required at single gene level for PAS calling and PAU calculation
 #' @param min_percent minium percent required for a PAS to be included (0-100)
 #' @param direct_RNA whether or not the data is direct RNAseq 
+#' @param internal_priming whether or not PASs subject to internal priming filtering
+#' @param pattern to look for internal priming sequencing surrouding PAS, either "pre", "post" or "both".
+#' @param genome_nae from BSgenome, defalt is human genome sequence "BSgenome.Hsapiens.UCSC.hg38" 
 #' @return a table showing the uasage of top PASs for each single gene with enough depth in the dataset of each sample 
 #' @export
 
-PAU_by_sample <- function(gene_reference, reads, min_reads=5, min_percent=1, cores=1, direct_RNA=F) {
+PAU_by_sample <- function(gene_reference, reads, min_reads=5, min_percent=1, cores=1, direct_RNA=F,internal_priming=F,pattern="post",genome_name="BSgenome.Hsapiens.UCSC.hg38") {
   gene_info <- gene_reference[,c(1:2, 5:6)]
+  if (!requireNamespace(genome_name, quietly = TRUE)) {
+    install.packages(genome_name)
+  }
+  genome <- getBSgenome(genome_name)
   reads_dt <- as.data.table(reads)
   setkey(reads_dt, gene_id)
   
@@ -103,10 +110,15 @@ PAU_by_sample <- function(gene_reference, reads, min_reads=5, min_percent=1, cor
         call_df$Density <- round(call_df$Density, 2)
         PAS_gene <- PAS_table[gene, 1:4][rep(1, nrow(call_df)),]
         PAS_gene$PAS <- call_df$Value
+        if (direct_RNA==F&internal_priming){PAS_gene <- Internal_priming(PAS_gene,pattern=pattern)}
+        if (nrow(PAS_gene)<nrow(call_df)){
+#         False_df <- as.data.table(call_df)[Value!%in%PAS_gene$PAS]
+          call_df <- as.data.table(call_df)[Value%in%PAS_gene$PAS]
+        }
         samples <- unique(reads_dt$sample)
         
         # Parallelize per sample
-        if (all(table(gene_all$sample)>=min_reads)) {
+        if (all(table(gene_all$sample)>=min_reads)&nrow(PAS_gene) > 0) {
           for (sample_name in samples) {
             sample_df <- gene_all[sample == sample_name]
             if (strand == "+") {

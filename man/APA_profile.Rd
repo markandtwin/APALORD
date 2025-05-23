@@ -13,7 +13,10 @@ APA_profile(
   min_reads = 5,
   min_percent = 1,
   cores = 1,
-  direct_RNA = FALSE
+  direct_RNA = FALSE,
+  internal_priming = F,
+  pattern = "post",
+  genome_name = "BSgenome.Hsapiens.UCSC.hg38"
 )
 }
 \arguments{
@@ -34,6 +37,12 @@ APA_profile(
 \item{cores}{number of threads used for the computation}
 
 \item{direct_RNA}{whether the data is direct RNAseq, TRUE or FALSE}
+
+\item{internal_priming}{whether or not PASs subject to internal priming filtering}
+
+\item{pattern}{to look for internal priming sequencing surrouding PAS, either "pre", "post" or "both".}
+
+\item{genome_nae}{from BSgenome, defalt is human genome sequence "BSgenome.Hsapiens.UCSC.hg38"}
 }
 \value{
 a table showing the APA change for each single gene with enough depth in the data

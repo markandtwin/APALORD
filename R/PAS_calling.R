@@ -1,18 +1,25 @@
 #' Call PASs at single gene level
 #' 
 #' This function extract PolyA sites information of each gene from the provided RNAseq data.
-#' @import dplyr stringr tidyr pbmcapply
+#' @import dplyr stringr tidyr pbmcapply BSgenome.Hsapiens.UCSC.hg38
 #' @param gene_reference information extracted from gtf file
-#' @param reads information from RNAseq samples
+#' @param reads information from RNAseq samples 
 #' @param cores number of threads used for the computation
 #' @param min_reads minium read counts required at single gene level for PAS calling
 #' @param min_percent minium percent required for a PAS to be included (0-100)
 #' @param direct_RNA whether or not the data is direct RNAseq 
+#' @param internal_priming whether or not PASs subject to internal priming filtering
+#' @param pattern to look for internal priming sequencing surrouding PAS, either "pre", "post" or "both".
+#' @param genome_nae from BSgenome, defalt is human genome sequence "BSgenome.Hsapiens.UCSC.hg38"
 #' @return a table showing the top PASs for each single gene with enough depth in the data and also a bed6 file table for all the PASs
 #' @export
 
-PAS_calling <- function(gene_reference, reads,min_reads=5, min_percent=1,cores=1,direct_RNA=FALSE){
-  gene_info <- gene_reference[,.(gene_id, strand, gene_name, gene_biotype)]
+PAS_calling <- function(gene_reference, reads,min_reads=5, min_percent=1,cores=1,direct_RNA=FALSE,internal_priming=F,pattern = "post",genome_name="BSgenome.Hsapiens.UCSC.hg38"){
+  if (!requireNamespace(genome_name, quietly = TRUE)) {
+    install.packages(genome_name)
+  }
+  genome <- getBSgenome(genome_name)
+  gene_info <- gene_reference[,.(gene_id,chrom, strand, gene_name, gene_biotype)]
   reads_dt <- as.data.table(reads)
   setkey(reads_dt, gene_id)
   
@@ -103,17 +110,25 @@ PAS_calling <- function(gene_reference, reads,min_reads=5, min_percent=1,cores=1
       
       if (nrow(call_df) > 0) {
         call_df$Density <- round(call_df$Density, 2)
-        PAS_gene <- PAS_table[gene, 1:4][rep(1, nrow(call_df)),]
+        PAS_gene <- gene_info[gene, ][rep(1, nrow(call_df)),]
         PAS_gene$PAS <- call_df$Value
-        add_df<- data.frame(matrix(ncol=6, nrow=(length(call_df$Value))))
-        add_df<-data.frame(
-          chrom = gene_all$chrom[1], # Numeric column
-          start = as.numeric(call_df$Value)-1, # Numeric column
-          end = as.numeric(call_df$Value),
-          name = gene_info[gene,gene_name],
-          density= as.numeric(call_df$Density),
-          strand = gene_info[gene,"strand"])
-        return(add_df)
+        if (direct_RNA==F&internal_priming){PAS_gene <- Internal_priming(PAS_gene, pattern = pattern)}
+        if (nrow(PAS_gene)<nrow(call_df)){
+#         False_df <- as.data.table(call_df)[Value!%in%PAS_gene$PAS]
+          call_df <- as.data.table(call_df)[Value%in%PAS_gene$PAS]
+        }
+        
+        if(nrow(call_df)>0){
+          add_df<- data.frame(matrix(ncol=6, nrow=(length(call_df$Value))))
+          add_df<-data.frame(
+            chrom = gene_all$chrom[1], # Numeric column
+            start = as.numeric(call_df$Value)-1, # Numeric column
+            end = as.numeric(call_df$Value),
+            name = gene_info[gene,gene_name],
+            density= as.numeric(call_df$Density),
+            strand = gene_info[gene,"strand"])
+          return(add_df)
+        }
       }
     }
   }

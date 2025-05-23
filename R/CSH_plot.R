@@ -8,14 +8,14 @@
 #' @export
 
 CSH_plot <- function(CSH_data,P_cutoff=0.05,delta=0.1){
-  CSH_table <-CSH_data
+  CSH_table <- CSH_data
   CS_shift_col <- colnames(CSH_table)[grepl("^CS_shift", colnames(CSH_table))]
-  setnames(CSH_table, old = CS_shift_col, new = "CS_shift")
   CSH_table$P_adj <-p.adjust(CSH_table$pvalue, method = "fdr")
   CSH_table$Col <- "gray"
   CSH_table$Vol_P <- (-log10(CSH_table$P_adj))
   CSH_table[Vol_P == Inf, Vol_P := (max(-log10(CSH_table[P_adj!=0]$P_adj))+0.1)]
   CSH_table$CS_shift_trend <- "no change"
+  setnames(CSH_table, old = CS_shift_col, new = "CS_shift")
   CSH_table[(P_adj < P_cutoff & CS_shift > delta), Col := "red"]
   CSH_table[(P_adj < P_cutoff & CS_shift > delta), CS_shift_trend := "Downstream"]
   CSH_table[(P_adj < P_cutoff & CS_shift < -delta), Col := "blue"]

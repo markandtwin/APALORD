@@ -56,6 +56,7 @@
           CSH_PAS$CS_shift <- 0
           CSH_PAS$pvalue <- min(test_ks_less$p.value,test_ks_greater$p.value)
         }
+      CSH_PAS[,c(paste0("CSH_",control,sep=""),paste0("CSH_",experimental,sep="")):= as.list(c(1-max(table(control_3end))/length(control_3end),1-max(table(experimental_3end))/length(experimental_3end)))]
         return(CSH_PAS)
       }
   }

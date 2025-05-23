@@ -10,7 +10,10 @@ PAU_by_sample(
   min_reads = 5,
   min_percent = 1,
   cores = 1,
-  direct_RNA = F
+  direct_RNA = F,
+  internal_priming = F,
+  pattern = "post",
+  genome_name = "BSgenome.Hsapiens.UCSC.hg38"
 )
 }
 \arguments{
@@ -25,6 +28,12 @@ PAU_by_sample(
 \item{cores}{number of threads used for the computation}
 
 \item{direct_RNA}{whether or not the data is direct RNAseq}
+
+\item{internal_priming}{whether or not PASs subject to internal priming filtering}
+
+\item{pattern}{to look for internal priming sequencing surrouding PAS, either "pre", "post" or "both".}
+
+\item{genome_nae}{from BSgenome, defalt is human genome sequence "BSgenome.Hsapiens.UCSC.hg38"}
 }
 \value{
 a table showing the uasage of top PASs for each single gene with enough depth in the dataset of each sample
