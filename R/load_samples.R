@@ -1,6 +1,6 @@
 #' Load two groups of samples
 #' 
-#' This function loads the output files for each group and extract necessary information for the analysis.
+#' This function loads the IsoQuant output files for each group and extract necessary information for the analysis.
 #' @rdname load_samples
 #' @import  dplyr data.table 
 #' @param  infile1  path to the input IsoQuant output files of group 1 samples(Control) 

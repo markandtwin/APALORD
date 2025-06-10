@@ -8,7 +8,7 @@
 #' @param min_reads minium reads count required at PAS for heterogenity analysis
 #' @param direct_RNA whether or not the data is direct RNAseq 
 #' @return a table showing the uasage of top PASs for each single gene with enough depth in the dataset of each sample 
-#' @export
+
 
  CSH_profile<- function(reads,PAU_data, control, experimental, min_reads=20, cores=1, direct_RNA=F) {
   reads_dt <- as.data.table(reads)

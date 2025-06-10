@@ -1,9 +1,9 @@
 
-devtools::install("../LRAPA")
-library(LRAPA)
-#detach("package:LRAPA", unload = TRUE)
+devtools::install("../APALORD")
+library(APALORD)
+#detach("package:APALORD", unload = TRUE)
 
-extdata_path <- system.file("extdata",package = "LRAPA")
+extdata_path <- system.file("extdata",package = "APALORD")
 gtf_file <- paste0(extdata_path,"/hg38_chr21.gtf.gz")
 gene_reference <- load_gtf(gtf_file,cores = 5)
 
@@ -24,9 +24,9 @@ write.table(PAU_data,file="../results/PAU_by_sample_hES_0.01_D7_D0.tsv",quote = 
 PAU_test_data <- PAU_test(PAU_data, reads, P_cutoff = 0.05)
 write.table(PAU_test_data,file="../results/hESC_PAU_test_data_all.tsv", quote = F,col.names = T, row.names = F,sep = "\t")
 
-dPAU_test_data <- LRAPA::end_PAS_examine(PAU_data, reads, P_cutoff = 0.2,
+dPAU_test_data <- APALORD::end_PAS_examine(PAU_data, reads, P_cutoff = 0.2,
                                          control = "D0", experimental = "D7", position = "distal", type = "FC")
-pPAU_test_data <- LRAPA::end_PAS_examine(PAU_data, reads, P_cutoff = 0.2,
+pPAU_test_data <- APALORD::end_PAS_examine(PAU_data, reads, P_cutoff = 0.2,
                                          control = "D0", experimental = "D7", position = "proximal", type = "delta")
 
 
@@ -35,7 +35,7 @@ APA_data <- APA_profile(gene_reference,reads,control="D0",experimental="D7", cor
 
 #########now the APA_plot function will save the plot to the directory insteading of showing in the plot panel#########
 APA_gene_table <- APA_plot(APA_data)
-roi
+
 write.table(APA_data,file="../results/APA_data_hES_0.01_D7_D0.tsv",quote = F,col.names = T, row.names = F,sep = "\t")
 write.table(APA_gene_table,file="../results/APA_gene_table_hES_0.01_D7_D0.tsv",quote = F,col.names = T, row.names = F,sep = "\t")
 

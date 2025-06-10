@@ -19,5 +19,5 @@ load_samples(infile1, infile2, group1 = "group1", group2 = "group2")
 a table including all the reads from the two groups of samples
 }
 \description{
-This function loads the output files for each group and extract necessary information for the analysis.
+This function loads the IsoQuant output files for each group and extract necessary information for the analysis.
 }

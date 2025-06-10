@@ -1,4 +1,4 @@
-Package: LRAPA
+Package: APALORD
 Title: Alternative polyadenylation (APA) analysis using long read RNA-seq data
 Version: 0.1
 Authors@R: 
@@ -16,7 +16,10 @@ Imports:
     tidyr,
     data.table,
     BSgenome.Hsapiens.UCSC.hg38,
-    BSgenome
+    BSgenome,
+    GenomicAlignments,
+    Rsamtools,
+    GenomicFeatures
 Suggests: 
     knitr,
     devtools,

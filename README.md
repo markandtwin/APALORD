@@ -179,18 +179,7 @@ message("Exploring APA changes for genes: GART, ENSG00000185658, ZBTB21")
 gene_explore(gene_reference, reads, c("GART", "ENSG00000185658", "ZBTB21"), APA_table = APA_data, direct_RNA = TRUE)
 ```
 
-#### Step 6: CSH Analysis (additional)
 
-```R
-# CSH analysis
-# - Profile cleavage site heterogeneity and visualize shifts
-
-CSH_data <- CSH_profile(reads, PAU_data, control = "D0", experimental = "D7", cores = 5, direct_RNA = TRUE)
-CSH_test <- CSH_plot(CSH_data)
-csh_file <- file.path(out_dir, "CSH_gene_table_hES_D0_D7.tsv")
-write.table(CSH_test, file = csh_file, quote = FALSE, col.names = TRUE, row.names = FALSE, sep = "\t")
-
-```
 
 ### Running the Workflow
 

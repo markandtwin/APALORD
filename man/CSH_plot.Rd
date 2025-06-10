@@ -2,7 +2,7 @@
 % Please edit documentation in R/CSH_plot.R
 \name{CSH_plot}
 \alias{CSH_plot}
-\title{Visualize the 3'end APA changes between the two samples}
+\title{Visualize the 3'end APA changes between the two groups}
 \usage{
 CSH_plot(CSH_data, P_cutoff = 0.05, delta = 0.1)
 }
