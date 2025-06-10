@@ -202,7 +202,7 @@ The workflow generates files in the `results/` directory:
 - `hESC_PAU_test_data_all.tsv`: Differential PAU test results.
 - `APA_data_hES_D7_D0.tsv`: APA profiles.
 - `APA_gene_table_hES_0.01_D7_D0.tsv`: APA gene table from plots.
-- Plots from `APA_plot` and `CSH_plot` in `Plots`.
+- Plots from `APA_plot` and `PAU_test` in `Plots`.
 
 
 
@@ -243,7 +243,7 @@ sample1.sorted.bam --threads 7
   ```
 
 
-- **Plot Output**: `APA_plot` or `CSH_plot` does not save plots. To save the plot:
+- **Plot Output**: `APA_plot` or `PAU_test` does not save plots. To save the plot:
 
   ```R
   pdf("APA_plot.pdf",7,7)
