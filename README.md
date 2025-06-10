@@ -13,7 +13,7 @@ analysis utilizing long read RNA-seq across conditions.
 - **Differential APA Analysis**: Identify significant PAU changes and analyze distal/proximal PAS shifts.
 - **APA Profiling**: Generate and visualize APA profiles between conditions.
 - **Single Gene Exploration**: Examine APA changes for specific genes.
-- **CSH Analysis**: Profile and visualize cleavage site heterogeneity shifts.
+
 
 ## Installation
 
@@ -202,7 +202,6 @@ The workflow generates files in the `results/` directory:
 - `hESC_PAU_test_data_all.tsv`: Differential PAU test results.
 - `APA_data_hES_D7_D0.tsv`: APA profiles.
 - `APA_gene_table_hES_0.01_D7_D0.tsv`: APA gene table from plots.
-- `CSH_gene_table_hES_D0_D7.tsv`: CSH analysis results.
 - Plots from `APA_plot` and `CSH_plot` in `Plots`.
 
 
