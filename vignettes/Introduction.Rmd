@@ -16,7 +16,7 @@ vignette: >
         warning = FALSE)
     ```
 
-`APALORD` is an R package for analyzing Alternative Polyadenylation (APA) in long-read RNA-seq data. It provides tools to identify polyadenylation sites (PAS), quantify polyadenylation site usage (PAU), perform differential APA analysis, profile cleavage site heterogeneity (CSH), and visualize APA changes across conditions. Optimized for multi-core processing, `APALORD` is ideal for APA analysis utilizing long-read RNA-seq across conditions.
+`APALORD` is an R package for analyzing Alternative Polyadenylation (APA) in long-read RNA-seq data. It provides tools to identify polyadenylation sites (PAS), quantify polyadenylation site usage (PAU), perform differential APA analysis,  and visualize APA changes across conditions. Optimized for multi-core processing, `APALORD` is ideal for APA analysis utilizing long-read RNA-seq across conditions.
 
 ## Features
 
@@ -222,7 +222,7 @@ The workflow generates files in the `results/` directory:
 - `hESC_PAU_test_data_all.tsv`: Differential PAU test results.
 - `APA_data_hES_D7_D0.tsv`: APA profiles.
 - `APA_gene_table_hES_D7_D0.tsv`: APA gene table from plots.
-- Plots: `APA_plot.pdf`, `CSH_plot.pdf`.
+- Plots: `APA_plot.pdf`, `PAU_test.pdf`.
 
 ## Notes
 
