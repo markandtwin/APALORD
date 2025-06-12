@@ -4,12 +4,14 @@
 \alias{Internal_priming}
 \title{Call internal priming events}
 \usage{
-Internal_priming(PAS_data, pattern = "pre")
+Internal_priming(PAS_data, pattern = "post", genome = genome)
 }
 \arguments{
 \item{PAS_data}{date table with columns of PAS information including chrom, strand and PAS}
 
-\item{pattern}{to look for internal priming sequencing surrouding PAS, either "pre", "post" or "both".}
+\item{pattern}{to look for internal priming sequencing surrounding PAS, either "pre", "post" or "both".}
+
+\item{genome}{genome sequence loaded from a .fasta file.}
 }
 \value{
 the same PAS_data without internal_primed "PAS".

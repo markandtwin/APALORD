@@ -9,9 +9,9 @@ load_from_bam(
   infile2,
   group1 = "group1",
   group2 = "group2",
-  gtf_file = gtf_file,
+  gtf_file,
   bambu = T,
-  genome.file = F,
+  genome_file = NULL,
   cores = 1
 )
 }
@@ -24,11 +24,13 @@ load_from_bam(
 
 \item{group2}{name or condition of samples imported from infile2}
 
-\item{genome.file}{genome sequence file used to align the reads in samples}
+\item{gtf_file}{path to annotation file to assign the read to a gene in the bam file}
+
+\item{bambu}{whether or not to turn off bambu when assign read to gene. It's highly recommended to keep it on to make sure the assignment is accurate although it takes time to run it}
+
+\item{genome_file}{path to genome sequence file (.fa or .fasta) that was used to align the reads in sample bam files}
 
 \item{cores}{number of threads used to process the data}
-
-\item{gtf}{annotation file to assign the read to a gene in the bam file.}
 }
 \value{
 a table including all the reads from the two groups of samples

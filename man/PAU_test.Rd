@@ -4,14 +4,14 @@
 \alias{PAU_test}
 \title{Perform PAU analysis at single PAS level in each gene}
 \usage{
-PAU_test(PAU_data, reads, P_cutoff = 0.05, FC_cutoff = 1)
+PAU_test(PAU_data, reads, P_cutoff = 0.1)
 }
 \arguments{
 \item{PAU_data}{output by PAU_by_sample function}
 
 \item{reads}{information from RNAseq samples that was used to get the PAU data}
 
-\item{P_cutoff}{cutoff of adjusted P value to be considered significant}
+\item{P_cutoff}{cutoff of adjusted P value to be considered significant and shown as colored on the plot}
 }
 \value{
 a table showing the usage of top PASs for each single gene with enough depth in the dataset of each sample

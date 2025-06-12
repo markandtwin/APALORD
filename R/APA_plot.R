@@ -5,6 +5,7 @@
 #' @param P_cutoff adjusted P value cutoff to be considered as significant change
 #' @param delta distance between two samples to be considered as significant APA events
 #' @param internal_priming_exclude logic value for whether or not to exclude genes with detected internal_priming events
+#' @param split.by.APA_type whether or not to split the plot by APA_type.
 #' @return a data frame showing the significant APA change between sample1 and sample2
 #' @export
 
@@ -38,9 +39,10 @@ APA_plot <- function(APA_data,P_cutoff=0.05,delta=0.1,internal_priming_exclude=F
     for(n in 1:length(type_list)){
       shortening <- length(subset(APA_table[APA_type==type_list[n]],Col=="blue")$gene_id)
       lengthening <- length(subset(APA_table[APA_type==type_list[n]],Col=="red")$gene_id)
+      all <- length(APA_table[APA_type==type_list[n]]$gene_id)
       plot(x=APA_table[APA_type==type_list[n]]$APA_change,  y=APA_table[APA_type==type_list[n]]$Vol_P, xlim=c(-1,1), 
            main =paste0("APA trend (",unique(APA_C$APA_type)[n], ")", sep=""),  
-           pch= 20, sub = paste(shortening,"shortened","and",lengthening,"lengthend" ,"in all", all, "events",sep=" "),
+           pch= 20, sub = paste(shortening,"shortened","and",lengthening,"lengthened" ,"in all", all, "events",sep=" "),
            xlab = paste0("APA change (",sample_names[2], " - ", sample_names[1], ")", sep=""),  ylab = "-log10(adjusted p value)",  
            col = APA_table[APA_type==type_list[n]]$Col, cex=0.7)
       abline(v = c(-delta,delta), col = "green", lty = 2, lwd = 2)
@@ -50,7 +52,7 @@ APA_plot <- function(APA_data,P_cutoff=0.05,delta=0.1,internal_priming_exclude=F
   }else {
     plot(x=APA_table$APA_change,  y=APA_table$Vol_P, xlim=c(-1,1), 
          main =paste0("APA trend (",sample_names[2], " vs ", sample_names[1], ")", sep=""),  
-         pch= 20, sub = paste(shortening,"shortened","and",lengthening,"lengthend" ,"in all", all, "events",sep=" "),
+         pch= 20, sub = paste(shortening,"shortened","and",lengthening,"lengthened" ,"in all", all, "events",sep=" "),
          xlab = paste0("APA change (",sample_names[2], " - ", sample_names[1], ")", sep=""),  ylab = "-log10(adjusted p value)",  col = APA_table$Col, cex=0.7)
     abline(v = c(-delta,delta), col = "green", lty = 2, lwd = 2)
     abline(h=(-log10(P_cutoff)), col = "green", lty = 2, lwd = 2)

@@ -2,15 +2,17 @@
 #' 
 #' This function checks the 3'end distribution within individual PAS to detect cleavage site shift.
 #' @import dplyr stringr tidyr pbmcapply data.table
-#' @param PAU_data PAU information from previous analysis
 #' @param reads information from RNAseq samples
+#' @param PAU_data PAU information from previous analysis
+#' @param control which group in the data is used as the control group
+#' @param experimental which group in the data is used as the experimental group
 #' @param cores number of threads used for the computation
 #' @param min_reads minium reads count required at PAS for heterogenity analysis
 #' @param direct_RNA whether or not the data is direct RNAseq 
 #' @return a table showing the uasage of top PASs for each single gene with enough depth in the dataset of each sample 
 
 
- CSH_profile<- function(reads,PAU_data, control, experimental, min_reads=20, cores=1, direct_RNA=F) {
+ CSH_profile<- function(reads,PAU_data, control, experimental,cores=1, min_reads=20,  direct_RNA=F) {
   reads_dt <- as.data.table(reads)
   setkey(reads_dt, gene_id)
   PAU_table <- PAU_data

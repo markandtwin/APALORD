@@ -20,6 +20,8 @@ APA_plot(
 \item{delta}{distance between two samples to be considered as significant APA events}
 
 \item{internal_priming_exclude}{logic value for whether or not to exclude genes with detected internal_priming events}
+
+\item{split.by.APA_type}{whether or not to split the plot by APA_type.}
 }
 \value{
 a data frame showing the significant APA change between sample1 and sample2

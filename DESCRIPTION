@@ -15,11 +15,12 @@ Imports:
     dplyr,
     tidyr,
     data.table,
-    BSgenome.Hsapiens.UCSC.hg38,
-    BSgenome,
+    Biostrings,
     GenomicAlignments,
     Rsamtools,
-    GenomicFeatures
+    GenomicFeatures,
+    bambu,
+    purrr
 Suggests: 
     knitr,
     devtools,

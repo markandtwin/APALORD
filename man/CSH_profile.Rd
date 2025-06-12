@@ -9,8 +9,8 @@ CSH_profile(
   PAU_data,
   control,
   experimental,
-  min_reads = 20,
   cores = 1,
+  min_reads = 20,
   direct_RNA = F
 )
 }
@@ -19,9 +19,13 @@ CSH_profile(
 
 \item{PAU_data}{PAU information from previous analysis}
 
-\item{min_reads}{minium reads count required at PAS for heterogenity analysis}
+\item{control}{which group in the data is used as the control group}
+
+\item{experimental}{which group in the data is used as the experimental group}
 
 \item{cores}{number of threads used for the computation}
+
+\item{min_reads}{minium reads count required at PAS for heterogenity analysis}
 
 \item{direct_RNA}{whether or not the data is direct RNAseq}
 }

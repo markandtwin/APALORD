@@ -7,12 +7,13 @@
 #' @param  infile2  path to the input IsoQuant output files of group 2 samples(Treated)
 #' @param  group1 name or condition of samples imported from infile1  
 #' @param  group2 name or condition of samples imported from infile2
-#' @param  gtf annotation file to assign the read to a gene in the bam file.
-#' @param  genome.file genome sequence file used to align the reads in samples
+#' @param  gtf_file path to annotation file to assign the read to a gene in the bam file
+#' @param  bambu whether or not to turn off bambu when assign read to gene. It's highly recommended to keep it on to make sure the assignment is accurate although it takes time to run it
+#' @param  genome_file path to genome sequence file (.fa or .fasta) that was used to align the reads in sample bam files
 #' @param  cores number of threads used to process the data
 #' @return a table including all the reads from the two groups of samples
 #' @export
-load_from_bam <- function(infile1, infile2, group1="group1", group2="group2",gtf_file=gtf_file,bambu=T,genome.file=NULL,cores=1){
+load_from_bam <- function(infile1, infile2, group1="group1", group2="group2",gtf_file,bambu=T,genome_file=NULL,cores=1){
   read_data_all <- data.table()
   txdb <- makeTxDbFromGFF(gtf_file)
   genes <- genes(txdb)

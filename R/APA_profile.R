@@ -1,7 +1,7 @@
 #' Transcriptome wide APA analysis 
 #' 
 #' This function calls the PASs for each single gene, calculate PAUs for each PAS, and perform the statistics to get the P value and PolyA site usage distance between the selected two groups 
-#' @import pbmcapply data.table BSgenome BSgenome.Hsapiens.UCSC.hg38
+#' @import pbmcapply data.table Rsamtools
 #' @param gene_reference information extracted from gtf file
 #' @param reads information from samples
 #' @param control which group in the data is used as the control group
@@ -9,7 +9,7 @@
 #' @param direct_RNA whether the data is direct RNAseq, TRUE or FALSE
 #' @param pattern to look for internal priming sequencing surrouding PAS, either "pre", "post" or "both".
 #' @param internal_priming whether or not PASs subject to internal priming filtering
-#' @param genome_nae from BSgenome, defalt is human genome sequence "BSgenome.Hsapiens.UCSC.hg38" 
+#' @param genome_file path to a genome sequence file (.fa or .fasta)
 #' @param min_counts minium read counts required for both groups at single gene level to perform the analysis
 #' @param min_reads minium read counts required for PAS calling
 #' @param min_percent  minium PAU for a PAS to be considered for downstream analysis
@@ -20,14 +20,19 @@
 
 APA_profile <- function(gene_reference, reads, control, experimental, 
                         min_counts=10, min_reads=5, min_percent=1, 
-                        cores=1, direct_RNA=FALSE,internal_priming=F,pattern="post",genome_name="BSgenome.Hsapiens.UCSC.hg38"){
-  if (!requireNamespace(genome_name, quietly = TRUE)) {
-    install.packages(genome_name)
+                        cores=1, direct_RNA=FALSE,internal_priming=F,pattern="post",genome_file=NULL){
+  if(internal_priming){
+    genome <- FaFile(genome_file)
+    open(genome)
+    genome
   }
-  genome <- getBSgenome(genome_name)
   # Filter and group control and experimental data
-  control_df <- reads[treatment == control, .SD[.N >= min_counts], by = gene_id]
-  experimental_df <- reads[treatment == experimental, .SD[.N >= min_counts], by = gene_id]
+  control_reads <- reads[treatment== control]
+  gene_counts <- control_reads[, .N, by = gene_id][N >= min_counts]
+  control_df <- control_reads[gene_id %in% gene_counts$gene_id]
+  experimental_reads <- reads[treatment== experimental]
+  gene_counts <- experimental_reads[, .N, by = gene_id][N >= min_counts]
+  experimental_df <- experimental_reads[gene_id %in% gene_counts$gene_id]
   
   # Genes of interest
   genes <- intersect(control_df$gene_id, experimental_df$gene_id)
@@ -105,7 +110,7 @@ APA_profile <- function(gene_reference, reads, control, experimental,
       if (nrow(call_df) > 0) {
         PAS_gene <- gene_vector[rep(1, nrow(call_df)),]
         PAS_gene$PAS <- call_df$Value
-        if (direct_RNA==F&internal_priming){PAS_gene <- Internal_priming(PAS_gene,pattern=pattern)}
+        if (direct_RNA==F&internal_priming){PAS_gene <- Internal_priming(PAS_gene,pattern=pattern,genome)}
         if (nrow(PAS_gene)<nrow(call_df)){
           False_df <- as.data.table(call_df)[!Value%in%PAS_gene$PAS]
 ##          call_df <- as.data.table(call_df)[Value%in%PAS_gene$PAS]
@@ -142,8 +147,10 @@ APA_profile <- function(gene_reference, reads, control, experimental,
       gene_vector <- APA_table_name[gene, c("gene_id","chrom","strand")]
       PAS_all <- PAS_fun(df_3end,gene_vector, min_percent, min_reads)
       PAS_info <- PAS_all[[1]]
-      False_PAS <- PAS_all[[2]]$Value
-      APA_gene[,"internal_priming"]<-ifelse(length(False_PAS)>0,paste(False_PAS, collapse = ","),as.numeric(NA))
+      if (direct_RNA==F&internal_priming){
+        False_PAS <- PAS_all[[2]]$Value
+        APA_gene[,"internal_priming"]<-ifelse(length(False_PAS)>0,paste(False_PAS, collapse = ","),as.numeric(NA))
+      }
       
       if (is.null(PAS_info)){
         n_PAS <- 0

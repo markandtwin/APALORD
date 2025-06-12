@@ -1,7 +1,7 @@
 #' Call PASs at single gene level
 #' 
 #' This function extract PolyA sites information of each gene from the provided RNAseq data.
-#' @import dplyr stringr tidyr pbmcapply BSgenome.Hsapiens.UCSC.hg38
+#' @import dplyr stringr tidyr pbmcapply 
 #' @param gene_reference information extracted from gtf file
 #' @param reads information from RNAseq samples 
 #' @param cores number of threads used for the computation
@@ -10,15 +10,17 @@
 #' @param direct_RNA whether or not the data is direct RNAseq 
 #' @param internal_priming whether or not PASs subject to internal priming filtering
 #' @param pattern to look for internal priming sequencing surrouding PAS, either "pre", "post" or "both".
-#' @param genome_nae from BSgenome, defalt is human genome sequence "BSgenome.Hsapiens.UCSC.hg38"
+#' @param genome_file path to a genome sequence file (.fa or .fasta)
 #' @return a table showing the top PASs for each single gene with enough depth in the data and also a bed6 file table for all the PASs
 #' @export
 
-PAS_calling <- function(gene_reference, reads,min_reads=5, min_percent=1,cores=1,direct_RNA=FALSE,internal_priming=F,pattern = "post",genome_name="BSgenome.Hsapiens.UCSC.hg38"){
-  if (!requireNamespace(genome_name, quietly = TRUE)) {
-    install.packages(genome_name)
+PAS_calling <- function(gene_reference, reads,min_reads=5, min_percent=1,cores=1,
+                        direct_RNA=FALSE,internal_priming=F,pattern = "post", genome_file=NULL){
+  if(internal_priming){
+    genome <- FaFile(genome_file)
+    open(genome)
+    genome
   }
-  genome <- getBSgenome(genome_name)
   gene_info <- gene_reference[,.(gene_id,chrom, strand, gene_name, gene_biotype)]
   reads_dt <- as.data.table(reads)
   setkey(reads_dt, gene_id)

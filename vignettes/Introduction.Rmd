@@ -1,5 +1,5 @@
 ---
-title: "LRAPA: Alternative Polyadenylation Analysis for Long-Read RNA-seq"
+title: "APALORD: Alternative Polyadenylation Analysis for Long-Read RNA-seq"
 author: "Zhiping Zhang (University of Connecticut Health Center) zhzhang@uchc.edu"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
@@ -16,7 +16,7 @@ vignette: >
         warning = FALSE)
     ```
 
-`LRAPA` is an R package for analyzing Alternative Polyadenylation (APA) in long-read RNA-seq data. It provides tools to identify polyadenylation sites (PAS), quantify polyadenylation site usage (PAU), perform differential APA analysis, profile cleavage site heterogeneity (CSH), and visualize APA changes across conditions. Optimized for multi-core processing, `LRAPA` is ideal for APA analysis utilizing long-read RNA-seq across conditions.
+`APALORD` is an R package for analyzing Alternative Polyadenylation (APA) in long-read RNA-seq data. It provides tools to identify polyadenylation sites (PAS), quantify polyadenylation site usage (PAU), perform differential APA analysis, profile cleavage site heterogeneity (CSH), and visualize APA changes across conditions. Optimized for multi-core processing, `APALORD` is ideal for APA analysis utilizing long-read RNA-seq across conditions.
 
 ## Features
 
@@ -25,7 +25,6 @@ vignette: >
 - **Differential APA Analysis**: Identify significant PAU changes and analyze distal/proximal PAS shifts.
 - **APA Profiling**: Generate and visualize APA profiles between conditions.
 - **Single Gene Exploration**: Examine APA changes for specific genes.
-- **CSH Analysis**: Profile and visualize cleavage site heterogeneity shifts.
 
 ## Installation
 
@@ -36,41 +35,42 @@ vignette: >
 - Input files:
   - GTF annotation file (e.g., `hg38_chr21.gtf.gz`)
   - Preprocessed long-read RNA-seq data (e.g., IsoQuant output: `OUT.corrected_reads.bed` and `OUT.read_assignments.tsv`) for two groups
+  - Genome file when load from bam files directly or internal priming check is needed (e.g., `chr21.fasta`)
 
-### Install LRAPA
+### Install APALORD
 
 1. **Install from GitHub**:
 
    ```{r eval=FALSE}
    install.packages("devtools")
-   devtools::install_github("markandtwin/LRAPA",build_vignettes = TRUE)
+   devtools::install_github("markandtwin/APALORD",build_vignettes = TRUE)
    ```
 
 2. **Verify Installation and check the Vignettes**:
 
    ```{r eval=FALSE}
-   library(LRAPA)
-   browseVignettes(package = "LRAPA")
+   library(APALORD)
+   browseVignettes(package = "APALORD")
    ```
 
 Alternatively, clone the repository and install locally:
 
 ```bash
-git clone https://github.com/markandtwin/LRAPA.git
-cd LRAPA
+git clone https://github.com/markandtwin/APALORD.git
+cd APALORD
 ```
 
 And then install it in R and check the Vignettes:
 
    ```{r eval=FALSE}
-   devtools::install("/path/to/LRAPA",build_vignettes = TRUE)
-   library(LRAPA)
-   browseVignettes(package = "LRAPA")
+   devtools::install("/path/to/APALORD",build_vignettes = TRUE)
+   library(APALORD)
+   browseVignettes(package = "APALORD")
    ```
 
 ## Usage
 
-The following example demonstrates the `LRAPA` workflow using the package’s example data for human embryonic stem cells (hESC, D0) and hESC-derived neurons (D7) samples. Each step is presented as a separate R code chunk, which can be combined into a script (`scripts/APA_analysis.R`) for pipeline execution.
+The following example demonstrates the `APALORD` workflow using the package’s example data for human embryonic stem cells (hESC, D0) and hESC-derived neurons (D7) samples. Each step is presented as a separate R code chunk, which can be combined into a script (`scripts/APA_analysis.R`) for pipeline execution.
 
 ### Example Workflow
 
@@ -79,9 +79,9 @@ To run the full workflow, create a script (`scripts/APA_analysis.R`) by combinin
 #### Step 0: Initialize Environment
 
 ```{r message=FALSE}
-# Initialize LRAPA workflow
+# Initialize APALORD workflow
 # - Load package and create output directory
-library(LRAPA)
+library(APALORD)
 
 # Set output directory
 out_dir <- "./results"
@@ -96,23 +96,31 @@ if (!dir.exists(out_dir)) {
 # Load GTF annotation
 # - Use hg38_chr21.gtf.gz for gene annotations
 # - Validate file existence and use 5 cores for parallel processing
-extdata_path <- system.file("extdata", package = "LRAPA")
+extdata_path <- system.file("extdata", package = "APALORD")
 gtf_file <- paste0(extdata_path, "/hg38_chr21.gtf.gz")
-gene_reference <- load_gtf(gtf_file, cores = 5)
+gene_reference <- load_gtf(gtf_file, cores = 1)
 ```
 
 #### Step 2: Load Samples
+##### Step 2.1: Load Samples from IsoQuant Output files (demo data included)
 
 ```{r load sample}
 # Load samples
 # - Define paths to IsoQuant output directories for D0 (control) and D7 (experimental) groups
-extdata_path <- system.file("extdata", package = "LRAPA")
+extdata_path <- system.file("extdata", package = "APALORD")
 sample1 <- c(paste0(extdata_path, "/D0/rep1"), paste0(extdata_path, "/D0/rep2"), paste0(extdata_path, "/D0/rep3"))
 sample2 <- c(paste0(extdata_path, "/D7/rep1"), paste0(extdata_path, "/D7/rep2"), paste0(extdata_path, "/D7/rep3"))
 
 reads <- load_samples(sample1, sample2, group1 = "D0", group2 = "D7")
 head(reads, n=3)
 ```
+
+##### Step 2.2: Load Samples from .bam files directly (the current package doesn't include demo bam files to work with this function)
+
+- set path to gtf file (`gtf_file`), path to genome file (`genome_file`) and path to sample bam files (`infile1`, `infile2`)
+- use `reads <-load_from_bam(infile1,infile2,group1 = "D0", group2 = "D7", gtf_file = gtf_file, genome_file = genome_file, cores=1)` to load data from bam files. 
+
+
 
 #### Step 3: PAS Calling (Optional)
 
@@ -121,7 +129,7 @@ head(reads, n=3)
 # - Identify PASs from reads data
 # - Use direct_RNA=TRUE for direct RNA-seq
 
-PAS_data <- PAS_calling(gene_reference, reads, cores = 5, direct_RNA = TRUE)
+PAS_data <- PAS_calling(gene_reference, reads, cores = 1, direct_RNA = TRUE)
 pas_file <- file.path(out_dir, "PAS_D7_D0.bed")
 write.table(PAS_data, file = pas_file, quote = FALSE, col.names = FALSE, row.names = FALSE, sep = "\t")
 ```
@@ -137,7 +145,7 @@ This PAS calling output file is in .bed format, so users can load it into IGV or
 # - Quantify polyadenylation usage per sample
 # - Use multiple cores for efficiency
 
-PAU_data <- PAU_by_sample(gene_reference, reads, cores = 7, direct_RNA = TRUE)
+PAU_data <- PAU_by_sample(gene_reference, reads, cores = 1, direct_RNA = TRUE)
 pau_file <- file.path(out_dir, "PAU_by_sample_D7_D0.tsv")
 write.table(PAU_data, file = pau_file, quote = FALSE, col.names = TRUE, row.names = FALSE, sep = "\t")
 ```
@@ -155,15 +163,15 @@ write.table(PAU_test_data, file = pau_test_file, quote = FALSE, col.names = TRUE
 
 This step uses DEXSeq to call differentially expressed PAS between the two groups.
 
-##### 4.3: Distal/Proximal PAS Shifts (Optional)
+##### 4.3 (Optional): Distal/Proximal PAS Shifts (Optional)
 
 ```{r message=FALSE, warning=FALSE, results='hide', fig.show='hide'}
 # Distal/proximal PAS shifts
 # - Examine shifts in distal and proximal PAS usage
 
-dPAU_test_data <- LRAPA::end_PAS_examine(PAU_data, reads, P_cutoff = 0.2,
+dPAU_test_data <- APALORD::end_PAS_examine(PAU_data, reads, P_cutoff = 0.2,
                                          control = "D0", experimental = "D7", position = "distal", type = "FC")
-pPAU_test_data <- LRAPA::end_PAS_examine(PAU_data, reads, P_cutoff = 0.2,
+pPAU_test_data <- APALORD::end_PAS_examine(PAU_data, reads, P_cutoff = 0.2,
                                          control = "D0", experimental = "D7", position = "proximal", type = "delta")
 ```
 
@@ -173,7 +181,7 @@ pPAU_test_data <- LRAPA::end_PAS_examine(PAU_data, reads, P_cutoff = 0.2,
 # APA profiling
 # - Generate APA profiles and visualize changes
 
-APA_data <- APA_profile(gene_reference, reads, control = "D0", experimental = "D7", cores = 5, direct_RNA = TRUE)
+APA_data <- APA_profile(gene_reference, reads, control = "D0", experimental = "D7", cores = 1, direct_RNA = TRUE)
 APA_gene_table <- APA_plot(APA_data)
 
 # The APA_plot function generates a volcano plot showing transcriptome-wide APA changes
@@ -192,17 +200,7 @@ write.table(APA_gene_table, file = apa_table_file, quote = FALSE, col.names = TR
 gene_explore(gene_reference, reads, c("GART"), APA_table = APA_data, direct_RNA = TRUE)
 ```
 
-#### Step 6: CSH Analysis (Additional)
 
-```{r fig.width = 5.5, fig.height = 5.5, dpi=100, fig.retina=3}
-# CSH analysis
-# - Profile cleavage site heterogeneity and visualize shifts
-
-CSH_data <- CSH_profile(reads, PAU_data, control = "D0", experimental = "D7", cores = 5, direct_RNA = TRUE)
-CSH_test <- CSH_plot(CSH_data)
-csh_file <- file.path(out_dir, "CSH_gene_table_hES_D0_D7.tsv")
-write.table(CSH_test, file = csh_file, quote = FALSE, col.names = TRUE, row.names = FALSE, sep = "\t")
-```
 
 ### Running the Workflow
 
@@ -224,7 +222,6 @@ The workflow generates files in the `results/` directory:
 - `hESC_PAU_test_data_all.tsv`: Differential PAU test results.
 - `APA_data_hES_D7_D0.tsv`: APA profiles.
 - `APA_gene_table_hES_D7_D0.tsv`: APA gene table from plots.
-- `CSH_gene_table_hES_D0_D7.tsv`: CSH analysis results.
 - Plots: `APA_plot.pdf`, `CSH_plot.pdf`.
 
 ## Notes
@@ -257,7 +254,7 @@ The workflow generates files in the `results/` directory:
   file.exists(gtf_file)
   ```
 
-- **Plot Output**: If `APA_plot` or `CSH_plot` does not save plots, use:
+- **Plot Output**: As `APA_plot`  does not save plots, we can use:
 
   ```{r eval=FALSE}
   pdf("APA_plot.pdf", width = 7, height = 7)
@@ -268,4 +265,4 @@ The workflow generates files in the `results/` directory:
 
 ## Citation
 
-If you use `LRAPA` in your research, please cite [INSERT CITATION OR PLACEHOLDER]. Contact the maintainers via [GitHub](https://github.com/markandtwin/LRAPA) for publication details.
+If you use `APALORD` in your research, please cite [INSERT CITATION OR PLACEHOLDER]. Contact the maintainers via [GitHub](https://github.com/markandtwin/APALORD) for publication details.

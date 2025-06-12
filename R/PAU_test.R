@@ -4,11 +4,11 @@
 #' @import dplyr stringr tidyr pbmcapply data.table DEXSeq
 #' @param PAU_data  output by PAU_by_sample function
 #' @param reads information from RNAseq samples that was used to get the PAU data
-#' @param P_cutoff cutoff of adjusted P value to be considered significant
+#' @param P_cutoff cutoff of adjusted P value to be considered significant and shown as colored on the plot
 #' @return a table showing the usage of top PASs for each single gene with enough depth in the dataset of each sample 
 #' @export
 
-PAU_test <- function(PAU_data,reads, P_cutoff=0.05, FC_cutoff=1){
+PAU_test <- function(PAU_data,reads, P_cutoff=0.1){
   groupID <- PAU_data$gene_id
   featureID <- as.character(PAU_data$PAS)
   countData <- PAU_data[, .SD, .SDcols = grep("reads$", names(PAU_data))]
@@ -25,7 +25,7 @@ PAU_test <- function(PAU_data,reads, P_cutoff=0.05, FC_cutoff=1){
   dxd_est <- estimateDispersions(dxd_norm)
   
   dxr1 <- DEXSeq::DEXSeq(dxd)
-  plotMA( dxr1, alpha=P_cutoff, cex=0.8 )
+  plotMA( dxr1, alpha = P_cutoff, cex=0.8 )
   
   dxrSig <- subset(as.data.frame(dxr1))
   PAU_data[, PAS_name := paste(gene_id, PAS, sep = ":")]

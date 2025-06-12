@@ -13,7 +13,7 @@ PAS_calling(
   direct_RNA = FALSE,
   internal_priming = F,
   pattern = "post",
-  genome_name = "BSgenome.Hsapiens.UCSC.hg38"
+  genome_file = NULL
 )
 }
 \arguments{
@@ -33,7 +33,7 @@ PAS_calling(
 
 \item{pattern}{to look for internal priming sequencing surrouding PAS, either "pre", "post" or "both".}
 
-\item{genome_nae}{from BSgenome, defalt is human genome sequence "BSgenome.Hsapiens.UCSC.hg38"}
+\item{genome_file}{path to a genome sequence file (.fa or .fasta)}
 }
 \value{
 a table showing the top PASs for each single gene with enough depth in the data and also a bed6 file table for all the PASs
