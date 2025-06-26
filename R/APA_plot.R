@@ -41,7 +41,7 @@ APA_plot <- function(APA_data,P_cutoff=0.05,delta=0.1,internal_priming_exclude=F
       lengthening <- length(subset(APA_table[APA_type==type_list[n]],Col=="red")$gene_id)
       all <- length(APA_table[APA_type==type_list[n]]$gene_id)
       plot(x=APA_table[APA_type==type_list[n]]$APA_change,  y=APA_table[APA_type==type_list[n]]$Vol_P, xlim=c(-1,1), 
-           main =paste0("APA trend (",unique(APA_C$APA_type)[n], ")", sep=""),  
+           main =paste0("APA trend (",type_list[n], ")", sep=""),  
            pch= 20, sub = paste(shortening,"shortened","and",lengthening,"lengthened" ,"in all", all, "events",sep=" "),
            xlab = paste0("APA change (",sample_names[2], " - ", sample_names[1], ")", sep=""),  ylab = "-log10(adjusted p value)",  
            col = APA_table[APA_type==type_list[n]]$Col, cex=0.7)
@@ -50,6 +50,7 @@ APA_plot <- function(APA_data,P_cutoff=0.05,delta=0.1,internal_priming_exclude=F
     }
     par(mfcol=c(1,1))
   }else {
+    par(mfcol=c(1,1))
     plot(x=APA_table$APA_change,  y=APA_table$Vol_P, xlim=c(-1,1), 
          main =paste0("APA trend (",sample_names[2], " vs ", sample_names[1], ")", sep=""),  
          pch= 20, sub = paste(shortening,"shortened","and",lengthening,"lengthened" ,"in all", all, "events",sep=" "),

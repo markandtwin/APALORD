@@ -250,5 +250,5 @@ sample1.sorted.bam --threads 7
 
 ## Citation
 
-If you use `APALORD` in your research, please cite [INSERT CITATION OR PLACEHOLDER].
+If you use `APALORD` in your research, please cite [https://www.biorxiv.org/content/10.1101/2025.06.11.658931v1.full].
 
