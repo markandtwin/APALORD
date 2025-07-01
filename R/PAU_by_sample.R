@@ -130,10 +130,10 @@ PAU_by_sample <- function(gene_reference, reads, min_reads=5, min_percent=1, cor
                 sum(abs(sample_df$chromEnd - x) <= 20)})
             } else {
               PAS_gene[, paste(sample_name,"PAU")] <- round(sapply(call_df$Value, function(x) {
-                mean(abs(sample_df$chromStart - x) <= 20) * 100
+                mean(abs(sample_df$chromStart+1 - x) <= 20) * 100
               }), 2)
               PAS_gene[, paste(sample_name,"reads")] <- sapply(call_df$Value, function(x) {
-                sum(abs(sample_df$chromStart - x) <= 20)})
+                sum(abs(sample_df$chromStart+1 - x) <= 20)})
             }
           }
           return(PAS_gene)

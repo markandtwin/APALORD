@@ -163,9 +163,14 @@ APA_profile <- function(gene_reference, reads, control, experimental,
 #       control_3end <- control_3end[!sapply(control_3end, function(x) any(abs(x - False_PAS) <= 20))]
 #       experimental_3end <- experimental_3end[!sapply(experimental_3end, function(x) any(abs(x - False_PAS) <= 20))]
         for (PAS in PASs_gene){
+          df_3end[abs(df_3end - PAS) <= 20] <- PAS
           control_3end[abs(control_3end - PAS) <= 20] <- PAS
           experimental_3end[abs(experimental_3end - PAS) <= 20] <- PAS
         }
+        reads_all <- table(df_3end[df_3end %in% PASs_gene])
+        reads_all <- c(reads_all, setNames(rep(0, length(PASs_gene) - length(reads_all)), PASs_gene[!PASs_gene %in% names(reads_all)]))
+        reads_all <-  reads_all[order(names(reads_all))]
+        PAUs_all <- round(100*reads_all/length(df_3end),2)
         reads_control <- table(control_3end[control_3end %in% PASs_gene])
         reads_control <- c(reads_control, setNames(rep(0, length(PASs_gene) - length(reads_control)), PASs_gene[!PASs_gene %in% names(reads_control)]))
         reads_control <-  reads_control[order(names(reads_control))]
@@ -175,7 +180,8 @@ APA_profile <- function(gene_reference, reads, control, experimental,
         reads_experimental <-  reads_experimental[order(names(reads_experimental))]
         PAUs_experimental <- round(100*reads_experimental/length(experimental_3end),2)
         PAU_changes <- round(PAUs_experimental - PAUs_control, 2)
-        APA_gene[,c("number_of_PAS","PAS_coordinates","PAS_read_counts","PAS_PAUs") := as.list(PAS_info)]
+        APA_gene[,c("number_of_PAS","PAS_coordinates","PAS_read_counts","PAS_PAUs") := as.list(c(PAS_info[1],PAS_info[2],paste(reads_all, collapse = ","),
+                                                                                                 paste(PAUs_all, collapse = ",")))]
         APA_gene[, c(paste0("PAUs_",control,sep=""), paste0("PAUs_",experimental,sep=""), "PAU_changes") := as.list(c(paste(PAUs_control, collapse = ","),
                                                                                       paste(PAUs_experimental, collapse = ","),paste(PAU_changes, collapse = ",")))]
         APA_gene[, c(paste0("reads_",control,sep=""), paste0("reads_",experimental,sep="")) := as.list(c(paste(reads_control, collapse = ","),paste(reads_experimental, collapse = ",")))]
