@@ -4,7 +4,7 @@
 \alias{Internal_priming}
 \title{Call internal priming events}
 \usage{
-Internal_priming(PAS_data, pattern = "post", genome = genome)
+Internal_priming(PAS_data, pattern = "post", genome = NULL)
 }
 \arguments{
 \item{PAS_data}{date table with columns of PAS information including chrom, strand and PAS}

@@ -1,7 +1,6 @@
 #' Check the 3'end distribution within the same PolyA site.
 #' 
 #' This function checks the 3'end distribution within individual PAS to detect cleavage site shift.
-#' @import dplyr stringr tidyr pbmcapply data.table
 #' @param reads information from RNAseq samples
 #' @param PAU_data PAU information from previous analysis
 #' @param control which group in the data is used as the control group
@@ -13,8 +12,8 @@
 
 
  CSH_profile<- function(reads,PAU_data, control, experimental,cores=1, min_reads=20,  direct_RNA=F) {
-  reads_dt <- as.data.table(reads)
-  setkey(reads_dt, gene_id)
+  reads_dt <- data.table::as.data.table(reads)
+  data.table::setkey(reads_dt, gene_id)
   PAU_table <- PAU_data
   PAU_table[,"PAS_name"] <- paste0(PAU_table$gene_id,":",PAU_table$PAS,sep="")
   PASs <- unique(PAU_table$PAS_name)
@@ -64,8 +63,8 @@
   }
   
   # Parallel processing
-  CSH_output <- pbmclapply(PASs, CSH_fun, mc.cores = cores)
-  CSH_table <- rbindlist(CSH_output,fill = T)  # Combine results
-  setnames(CSH_table, old = "CS_shift", new = paste0("CS_shift (",experimental," - ", control,")", sep=""))
+  CSH_output <- pbmcapply::pbmclapply(PASs, CSH_fun, mc.cores = cores)
+  CSH_table <- data.table::rbindlist(CSH_output,fill = T)  # Combine results
+  data.table::setnames(CSH_table, old = "CS_shift", new = paste0("CS_shift (",experimental," - ", control,")", sep=""))
   return(CSH_table)
 }

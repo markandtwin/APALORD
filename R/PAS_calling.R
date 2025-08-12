@@ -1,7 +1,6 @@
 #' Call PASs at single gene level
 #' 
 #' This function extract PolyA sites information of each gene from the provided RNAseq data.
-#' @import dplyr stringr tidyr pbmcapply 
 #' @param gene_reference information extracted from gtf file
 #' @param reads information from RNAseq samples 
 #' @param cores number of threads used for the computation
@@ -17,12 +16,13 @@
 PAS_calling <- function(gene_reference, reads,min_reads=5, min_percent=1,cores=1,
                         direct_RNA=FALSE,internal_priming=F,pattern = "post", genome_file=NULL){
   if(internal_priming){
-    genome <- FaFile(genome_file)
-    open(genome)
+    genome <- Rsamtools::FaFile(genome_file)
+    Rsamtools::open(genome)
     genome
   }
   gene_info <- gene_reference[,.(gene_id,chrom, strand, gene_name, gene_biotype)]
-  reads_dt <- as.data.table(reads)
+  reads$read_id <-c(1:nrow(reads))
+  reads_dt <- data.table::as.data.table(reads[, !(c("sample","treatment")), with = FALSE])
   setkey(reads_dt, gene_id)
   
   # Pre-filter the reads
@@ -33,6 +33,31 @@ PAS_calling <- function(gene_reference, reads,min_reads=5, min_percent=1,cores=1
   
   PAS_table <- gene_info[gene_id %in% genes]
   setkey(PAS_table, gene_id)  # Ensure efficient subsetting
+  
+  find_match <- function(a, b_vec) {
+    distances <- abs(a - b_vec)
+    if (any(distances <= 20)) {
+      return(b_vec[which.min(distances)])  # Return closest match
+    } else {
+      return(NA)  # No match within 20
+    }
+  }
+  
+  match_fun <- function(strand,reads_data,PAS_gene){
+    B <- PAS_gene$PAS
+    if(strand=="+"){
+      A <- reads_data$chromEnd
+      matches <- sapply(A, find_match, b_vec = B)
+      reads_data$match <-matches
+    }
+    if(strand=="-"){
+      A <- reads_data$chromStart+1
+      matches <- sapply(A, find_match, b_vec = B)
+      reads_data$match <-matches
+    }
+    PAS_sample_counts <- table(reads_data$match)
+    return(PAS_sample_counts)
+  }
   
   # Vectorized PAU function
   PAU_fun <- function(gene) {
@@ -92,33 +117,30 @@ PAS_calling <- function(gene_reference, reads,min_reads=5, min_percent=1,cores=1
         combined_df <-df
       }
       
-      call_df <- combined_df[combined_df$Density >= min_percent & combined_df$Frequency > 2, ]
+      call_df <- combined_df[combined_df$Density >= min_percent & combined_df$Frequency >=5, ]
       call_df <- call_df[order(call_df$Value, decreasing = F), ]
       
-      if (nrow(call_df)>1){
-        marks<-vector()
-        for (i in 1:(nrow(call_df)-1)) {
-          diff <- call_df[i+1,]$Value - call_df[i,]$Value  # Since values are ordered, subtraction works directly
-          if (diff < 20*2) {
-            print(diff)
-            m <- ifelse(call_df[i,]$Frequency < call_df[i+1,]$Frequency, i, i+1)
-            marks <- append(marks, m)
-          }
-        }
-        if (length(marks)>0){
-          call_df <- call_df[-marks,]
-        }
-      }
-      
+ 
       if (nrow(call_df) > 0) {
         call_df$Density <- round(call_df$Density, 2)
         PAS_gene <- gene_info[gene, ][rep(1, nrow(call_df)),]
         PAS_gene$PAS <- call_df$Value
-        if (direct_RNA==F&internal_priming){PAS_gene <- Internal_priming(PAS_gene, pattern = pattern)}
+        if (direct_RNA==F&internal_priming){PAS_gene <- Internal_priming(PAS_gene, pattern = pattern,genome = genome)}
         if (nrow(PAS_gene)<nrow(call_df)){
-#         False_df <- as.data.table(call_df)[Value!%in%PAS_gene$PAS]
-          call_df <- as.data.table(call_df)[Value%in%PAS_gene$PAS]
+#         False_df <- data.table::as.data.table(call_df)[Value!%in%PAS_gene$PAS]
+          call_df <- data.table::as.data.table(call_df)[Value%in%PAS_gene$PAS]
         }
+        call_df$PAS <- call_df$Value
+        PAS_sample_counts <- data.table::as.data.table(match_fun(strand,reads_data =  gene_all,call_df))
+        if(nrow(PAS_sample_counts)>0){
+          colnames(PAS_sample_counts)<-c("Value","reads")
+          PAS_sample_counts[, Value := as.double(Value)]
+          call_df <- merge(call_df, PAS_sample_counts, by = "Value", all.x = TRUE)
+        }else{
+          call_df[,"reads"] <- 0
+        }
+        call_df[, "PAU"] <- round(100*call_df[,"reads"]/nrow(gene_all),3)
+        
         
         if(nrow(call_df)>0){
           add_df<- data.frame(matrix(ncol=6, nrow=(length(call_df$Value))))
@@ -127,7 +149,7 @@ PAS_calling <- function(gene_reference, reads,min_reads=5, min_percent=1,cores=1
             start = as.numeric(call_df$Value)-1, # Numeric column
             end = as.numeric(call_df$Value),
             name = gene_info[gene,gene_name],
-            density= as.numeric(call_df$Density),
+            density= as.numeric(call_df$PAU),
             strand = gene_info[gene,"strand"])
           return(add_df)
         }
@@ -136,8 +158,8 @@ PAS_calling <- function(gene_reference, reads,min_reads=5, min_percent=1,cores=1
   }
   
   # Parallel processing
-  PAS_output <- pbmclapply(genes, PAU_fun, mc.cores = cores)
-  PAS_bed <- rbindlist(PAS_output,fill = T)  # Combine results
+  PAS_output <- pbmcapply::pbmclapply(genes, PAU_fun, mc.cores = cores)
+  PAS_bed <- data.table::rbindlist(PAS_output,fill = T)  # Combine results
   
   return(PAS_bed)
 }

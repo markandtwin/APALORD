@@ -1,5 +1,4 @@
 #' Visualize the 3'ends of all the reads in each sample for an individual gene and the PAUs for each polyA site from each group/sample
-#' @import data.table
 #' @param gene_reference information extracted from gtf file
 #' @param reads information from samples
 #' @param gene_list name or id of a list of genes of interest
@@ -16,11 +15,11 @@ gene_explore <- function(gene_reference, reads, gene_list, APA_table, direct_RNA
   for (gene in gene_list){
     i <- gene_info[apply(gene_info, 1, function(x) any(grepl(gene, x)))]$gene_id
     for (id in i){
-      gene_all <- reads[as.character(gene_id)==id]
+      gene_all <- data.table::as.data.table(reads)[as.character(gene_id)==id]
       if(direct_RNA){
         gene_all <- gene_all[strand == gene_info[id, strand]]
       }
-      if (gene_info[id, strand] == "+") {
+      if (data.table::as.data.table(gene_info)[gene_id == id, strand] == "+") {
         control_3end <- subset(gene_all, treatment == sample_names[1])$chromEnd
         experimental_3end <- subset(gene_all, treatment == sample_names[2])$chromEnd
       }
@@ -29,7 +28,7 @@ gene_explore <- function(gene_reference, reads, gene_list, APA_table, direct_RNA
         experimental_3end <- subset(gene_all, treatment == sample_names[2])$chromStart
       }
       if(nrow(APA_table[gene_id==id])>0){
-        PAU_table <-APA_table[gene_id==id,..names]
+        PAU_table <-data.table::as.data.table(APA_table)[gene_id==id,..names]
         APA_change_table<- data.frame(PAS_position=as.numeric(unlist(strsplit(APA_table[gene_id==id]$PAS_coordinates, split = ","))),
                                       PAU_changes=as.numeric(unlist(strsplit(APA_table[gene_id==id]$PAU_changes, split = ","))),
                                       control_PAUs=as.numeric(unlist(strsplit(as.character(PAU_table[,1]), split = ","))),

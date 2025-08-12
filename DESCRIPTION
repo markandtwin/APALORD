@@ -20,7 +20,9 @@ Imports:
     Rsamtools,
     GenomicFeatures,
     bambu,
-    purrr
+    purrr,
+    GenomicRanges,
+    IRanges
 Suggests: 
     knitr,
     devtools,

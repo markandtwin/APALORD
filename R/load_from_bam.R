@@ -2,7 +2,6 @@
 #' 
 #' This function loads the reads information from bam files for each group and extract necessary information for the analysis.
 #' @rdname load_from_bam
-#' @import  dplyr data.table GenomicFeatures Rsamtools GenomicAlignments purrr dplyr bambu pbmcapply data.table
 #' @param  infile1  path to the input IsoQuant output files of group 1 samples(Control) 
 #' @param  infile2  path to the input IsoQuant output files of group 2 samples(Treated)
 #' @param  group1 name or condition of samples imported from infile1  
@@ -15,14 +14,14 @@
 #' @return a table including all the reads from the two groups of samples
 #' @export
 load_from_bam <- function(infile1, infile2, group1="group1", group2="group2",gtf_file,bambu=T,genome_file,stranded =F, cores=1){
-  read_data_all <- data.table()
-  txdb <- makeTxDbFromGFF(gtf_file)
-  genes <- genes(txdb)
+  read_data_all <- data.table::data.table()
+  txdb <- GenomicFeatures::makeTxDbFromGFF(gtf_file)
+  genes <- GenomicFeatures::genes(txdb)
   
   
   if (bambu){
-    annotations <- prepareAnnotations(txdb)
-    se.multiSample<- bambu(reads = c(infile1,infile2), annotations = annotations, genome = genome_file, stranded = stranded,
+    annotations <- bambu::prepareAnnotations(txdb)
+    se.multiSample<- bambu::bambu(reads = c(infile1,infile2), annotations = annotations, genome = genome_file, stranded = stranded,
                            quant=F,trackReads = T, ncore = cores)
   }
   
@@ -32,13 +31,13 @@ load_from_bam <- function(infile1, infile2, group1="group1", group2="group2",gtf
     meta_tbl <- se@metadata$readToTranscriptMap
     
     filtered_tbl <- meta_tbl %>%
-      filter(
-        map_lgl(equalMatches, ~ !is.null(.x) && any(.x %in% txs)) |
-          map_lgl(compatibleMatches, ~ !is.null(.x) && any(.x %in% txs))
+      dplyr::filter(
+        purrr::map_lgl(equalMatches, ~ !is.null(.x) && any(.x %in% txs)) |
+          purrr::map_lgl(compatibleMatches, ~ !is.null(.x) && any(.x %in% txs))
       )
     
     if (nrow(filtered_tbl) > 0) {
-      data.table(read_id = filtered_tbl$readId, gene_id = gene)
+      data.table::data.table(read_id = filtered_tbl$readId, gene_id = gene)
     } else {
       NULL
     }
@@ -59,11 +58,11 @@ load_from_bam <- function(infile1, infile2, group1="group1", group2="group2",gtf
     strand_info <- as.character(strand(reads))
     
     # Compute 5' and 3' end based on strand
-    five_prime <- ifelse(strand_info == "+", end(reads), start(reads))
-    three_prime <- ifelse(strand_info == "+", end(reads), start(reads))
+    five_prime <- ifelse(strand_info == "+", GenomicRanges::end(reads), GenomicRanges::start(reads))
+    three_prime <- ifelse(strand_info == "+", GenomicRanges::end(reads), GenomicRanges::start(reads))
     
     # Combine into a data frame
-    read_data <- data.table(
+    read_data <- data.table::data.table(
       read_id = read_ids,
       strand = strand_info,
       gene_id = "NA",
@@ -73,16 +72,16 @@ load_from_bam <- function(infile1, infile2, group1="group1", group2="group2",gtf
       sample = infile1[i],
       treatment = group1
     )
-    read_data <-unique(read_data, by = "read_id")
+    read_data <-data.table::unique(read_data, by = "read_id")
     # Assign to gene
     
     if(bambu){
-      genes <- intersect(unique(rowData(se.multiSample[[i]])$GENEID),genes$gene_id)
-      results_list <- pbmclapply(genes, assign_gene, mc.cores = cores)
+      Genes <- intersect(data.table::unique(rowData(se.multiSample[[i]])$GENEID),genes$gene_id)
+      results_list <- pbmclapply(Genes, assign_gene, mc.cores = cores)
       
       # Combine results
-      read_gene_map <- rbindlist(results_list, use.names = TRUE, fill = TRUE)
-      read_gene_map <- unique(read_gene_map, by = "read_id")
+      read_gene_map <- data.table::rbindlist(results_list, use.names = TRUE, fill = TRUE)
+      read_gene_map <- data.table::unique(read_gene_map, by = "read_id")
       read_data[read_id %in% read_gene_map$read_id, gene_id := read_gene_map$gene_id[match(read_id, read_gene_map$read_id)]]
     }else{
       overlaps <- findOverlaps(reads, genes)
@@ -92,22 +91,22 @@ load_from_bam <- function(infile1, infile2, group1="group1", group2="group2",gtf
   }
   
   for (i in 1:length(infile2)){
-    reads <- readGAlignments(infile2[i], use.names = TRUE)
+    reads <- readGAlignments::readGAlignments(infile2[i], use.names = TRUE)
     # Read ID
     read_ids <- names(reads)
     
     # Chromosome / seqname
-    seqnames <- as.character(seqnames(reads))
+    seqnames <- as.character(GenomicRanges::seqnames(reads))
     
     # Strand
-    strand_info <- as.character(strand(reads))
+    strand_info <- as.character(GenomicRanges::strand(reads))
     
     # Compute 5' and 3' end based on strand
     five_prime <- ifelse(strand_info == "+", end(reads), start(reads))
     three_prime <- ifelse(strand_info == "+", end(reads), start(reads))
     
     # Combine into a data frame
-    read_data <- data.table(
+    read_data <- data.table::data.table(
       read_id = read_ids,
       strand = strand_info,
       gene_id = "NA",
@@ -117,17 +116,16 @@ load_from_bam <- function(infile1, infile2, group1="group1", group2="group2",gtf
       sample = infile2[i],
       treatment = group2
     )
-    read_data <-unique(read_data, by = "read_id")
+    read_data <-data.table::unique(read_data, by = "read_id")
     # Assign to gene
     i <- i+length(infile1)
     if(bambu){
-      j <- i+length(infile1)
-      genes <- intersect(unique(rowData(se.multiSample[[j]])$GENEID),genes$gene_id)
-      results_list <- pbmclapply(genes, assign_gene, mc.cores = cores)
+      Genes <- intersect(data.table::unique(rowData(se.multiSample[[i]])$GENEID),genes$gene_id)
+      results_list <- pbmcapply::pbmclapply(Genes, assign_gene, mc.cores = cores)
       
       # Combine results
-      read_gene_map <- rbindlist(results_list, use.names = TRUE, fill = TRUE)
-      read_gene_map <- unique(read_gene_map, by = "read_id")
+      read_gene_map <- data.table::rbindlist(results_list, use.names = TRUE, fill = TRUE)
+      read_gene_map <- data.table::unique(read_gene_map, by = "read_id")
       read_data[read_id %in% read_gene_map$read_id, gene_id := read_gene_map$gene_id[match(read_id, read_gene_map$read_id)]]
     }else{
       overlaps <- findOverlaps(reads, genes)
@@ -136,6 +134,6 @@ load_from_bam <- function(infile1, infile2, group1="group1", group2="group2",gtf
     read_data_all <- rbind(read_data_all, read_data)
   }
     
-  read_data_all <- subset(read_data_all,gene_id!="NA")
+  read_data_all <- base::subset(read_data_all,gene_id!="NA")
   return(read_data_all)
 }
