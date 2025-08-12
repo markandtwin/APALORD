@@ -185,22 +185,21 @@ APA_profile <- function(gene_reference, reads, control, experimental,
         APA_gene[, c(paste0("PAUs_",control,sep=""), paste0("PAUs_",experimental,sep=""), "PAU_changes") := as.list(c(paste(PAUs_control, collapse = ","),
                                                                                       paste(PAUs_experimental, collapse = ","),paste(PAU_changes, collapse = ",")))]
         APA_gene[, c(paste0("reads_",control,sep=""), paste0("reads_",experimental,sep="")) := as.list(c(paste(reads_control, collapse = ","),paste(reads_experimental, collapse = ",")))]
+        test_ks <- ks.test(control_3end, experimental_3end)
+        APA_gene$pvalue <-test_ks$p.value
         if (strand == "+") {
           test_ks_less <- ks.test(control_3end, experimental_3end, alternative = "less")
           test_ks_greater <- ks.test(control_3end, experimental_3end, alternative = "greater")
         } else {
           test_ks_less <- ks.test(experimental_3end,control_3end ,alternative = "less")
-          test_ks_greater <- ks.test(experimental_3end,control_3end ,alternative = "greater")
+          test_ks_greater <- ks.test(experimental_3end,control_3end,alternative = "greater")
         }
-        if (test_ks_greater$statistic > test_ks_less$statistic) {
+        if (test_ks$statistic == test_ks_greater$statistic) {
           APA_gene$APA_change <- test_ks_greater$statistic
-          APA_gene$pvalue <- test_ks_greater$p.value
-        } else if (test_ks_greater$statistic < test_ks_less$statistic) {
+        } else if (test_ks$statistic == test_ks_less$statistic) {
           APA_gene$APA_change <- (-test_ks_less$statistic)
-          APA_gene$pvalue <- test_ks_less$p.value
         } else {
           APA_gene$APA_change <- 0
-          APA_gene$pvalue <- min(test_ks_less$p.value,test_ks_greater$p.value)
         }
         if((strand=="-")&&(PASs_gene[length(PASs_gene)]<APA_gene[,"last_exon_chromEnd"])){
           APA_gene[,"APA_type"] <- "Last_exon_tandem_APA"

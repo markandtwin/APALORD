@@ -10,22 +10,26 @@
 #' @param  gtf_file path to annotation file to assign the read to a gene in the bam file
 #' @param  bambu whether or not to turn off bambu when assign read to gene. It's highly recommended to keep it on to make sure the assignment is accurate although it takes time to run it
 #' @param  genome_file path to genome sequence file (.fa or .fasta) that was used to align the reads in sample bam files
+#' @param  stranded whether or not the reads sequences are stranded,  defaults to FALSE.
 #' @param  cores number of threads used to process the data
 #' @return a table including all the reads from the two groups of samples
 #' @export
-load_from_bam <- function(infile1, infile2, group1="group1", group2="group2",gtf_file,bambu=T,genome_file=NULL,cores=1){
+load_from_bam <- function(infile1, infile2, group1="group1", group2="group2",gtf_file,bambu=T,genome_file,stranded =F, cores=1){
   read_data_all <- data.table()
   txdb <- makeTxDbFromGFF(gtf_file)
   genes <- genes(txdb)
   
+  
   if (bambu){
-    se.multiSample<- bambu(reads = c(infile1,infile2), annotations = annotations, genome = genome.file, trackReads = T, ncore = cores)
-    genes <- intersect(unique(rowData(se.multiSample)$GENEID),genes$gene_id)
+    annotations <- prepareAnnotations(txdb)
+    se.multiSample<- bambu(reads = c(infile1,infile2), annotations = annotations, genome = genome_file, stranded = stranded,
+                           quant=F,trackReads = T, ncore = cores)
   }
   
   assign_gene <- function(gene){
-    txs <- which(rowData(se.multiSample)$GENEID == gene)
-    meta_tbl <- se.multiSample@metadata$readToTranscriptMaps[[i]]
+    txs <- which(rowData(se.multiSample[[i]])$GENEID == gene)
+    se <- se.multiSample[[i]]
+    meta_tbl <- se@metadata$readToTranscriptMap
     
     filtered_tbl <- meta_tbl %>%
       filter(
@@ -73,6 +77,7 @@ load_from_bam <- function(infile1, infile2, group1="group1", group2="group2",gtf
     # Assign to gene
     
     if(bambu){
+      genes <- intersect(unique(rowData(se.multiSample[[i]])$GENEID),genes$gene_id)
       results_list <- pbmclapply(genes, assign_gene, mc.cores = cores)
       
       # Combine results
@@ -116,6 +121,8 @@ load_from_bam <- function(infile1, infile2, group1="group1", group2="group2",gtf
     # Assign to gene
     i <- i+length(infile1)
     if(bambu){
+      j <- i+length(infile1)
+      genes <- intersect(unique(rowData(se.multiSample[[j]])$GENEID),genes$gene_id)
       results_list <- pbmclapply(genes, assign_gene, mc.cores = cores)
       
       # Combine results

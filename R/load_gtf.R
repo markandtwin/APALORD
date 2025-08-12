@@ -57,14 +57,18 @@ load_gtf <- function(gtf_file, cores = 1) {
   # Extract unique gene IDs from exons
   exon_genes <- unique(exon_info$gene_id)
   
-  # Define the function to extract distal stop codon information
+  # Define the function to extract last exon information
   extract_fun <- function(gene,  exon_info) {
     strand <- exon_info[gene, strand][1]
     
     if (strand == "+") {
-      gene_exon_info <- exon_info[gene_id == gene][which.max(chromEnd), ]
+      gene_exon_info <- exon_info[gene_id == gene]
+      gene_exon_info <- gene_exon_info[chromEnd == max(chromEnd)]
+      gene_exon_info <- gene_exon_info[which.max(chromStart)]
     } else if (strand == "-") {
-      gene_exon_info <- exon_info[gene_id == gene][which.min(chromStart), ]
+      gene_exon_info <- exon_info[gene_id == gene]
+      gene_exon_info <- gene_exon_info[chromStart == min(chromStart)]
+      gene_exon_info <- gene_exon_info[which.min(chromEnd)]
     }
     return(gene_exon_info)
   }

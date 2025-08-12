@@ -11,7 +11,8 @@ load_from_bam(
   group2 = "group2",
   gtf_file,
   bambu = T,
-  genome_file = NULL,
+  genome_file,
+  stranded = F,
   cores = 1
 )
 }
@@ -29,6 +30,8 @@ load_from_bam(
 \item{bambu}{whether or not to turn off bambu when assign read to gene. It's highly recommended to keep it on to make sure the assignment is accurate although it takes time to run it}
 
 \item{genome_file}{path to genome sequence file (.fa or .fasta) that was used to align the reads in sample bam files}
+
+\item{stranded}{whether or not the reads sequences are stranded,  defaults to FALSE.}
 
 \item{cores}{number of threads used to process the data}
 }
