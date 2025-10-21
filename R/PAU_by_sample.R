@@ -25,10 +25,10 @@ PAU_by_sample <- function(gene_reference, reads, min_reads=5, min_percent=1, cor
   data.table::setkey(reads_dt, gene_id)
   
   # Pre-filter the reads
-  reads_dt <- reads_dt[gene_id%in%data.table::unique(reads_dt[,.N, by = gene_id][N >= min_reads]$gene_id)]  # Filter genes with fewer than min_reads
-  genes <- data.table::unique(reads_dt$gene_id)
+  reads_dt <- reads_dt[gene_id%in%unique(reads_dt[,.N, by = gene_id][N >= min_reads]$gene_id)]  # Filter genes with fewer than min_reads
+  genes <- unique(reads_dt$gene_id)
   genes <- as.vector(genes[genes != "."])
-  samples <- data.table::unique(reads_dt$sample)
+  samples <- unique(reads_dt$sample)
   
   
   PAS_table <- gene_info[gene_id %in% genes]
@@ -129,11 +129,11 @@ PAU_by_sample <- function(gene_reference, reads, min_reads=5, min_percent=1, cor
         if (all(table(gene_all$sample)>=min_reads)&nrow(PAS_gene) > 0) {
           for (sample_name in samples) {
             sample_df <- gene_all[sample == sample_name]
-            PAS_sample_counts <- as.data.table(match_fun(strand,reads_data =  sample_df,PAS_gene))
+            PAS_sample_counts <- data.table::as.data.table(match_fun(strand,reads_data =  sample_df,PAS_gene))
             if(nrow(PAS_sample_counts)>0){
               colnames(PAS_sample_counts)<-c("PAS",paste(sample_name,"reads"))
               PAS_sample_counts[, PAS := as.double(PAS)]
-              PAS_gene <- data.table::merge(PAS_gene, PAS_sample_counts, by = "PAS", all.x = TRUE)
+              PAS_gene <- merge(PAS_gene, PAS_sample_counts, by = "PAS", all.x = TRUE)
               PAS_gene[is.na(get(paste(sample_name,"reads"))), (paste(sample_name,"reads")) := 0L]
             }else{
               PAS_gene[,paste(sample_name,"reads")] <- 0

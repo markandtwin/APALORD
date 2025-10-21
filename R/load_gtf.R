@@ -1,6 +1,6 @@
 #' Load a gtf file for reference
 #' 
-#' This function loads a gtf file and extract necessary information of each gene from it.
+#' This function loads a gtf file and extract necessary information of each gene from it. 
 #' @param gtf_file path to the input gtf file
 #' @param cores number of threads used for the computation
 #' @return a table including gene annotation, stop codon and last exon from the gtf file
@@ -9,9 +9,10 @@
 
 load_gtf <- function(gtf_file, cores = 1) {
   # Read data using fread for speed
-  gtf_df <- data.table::fread(gtf_file, header = FALSE, sep = "\t")
+  gtf_df <- data.table::fread(gtf_file, header = T, sep = "\t",data.table = T)
   # Filter and process 'gene' annotations
-  gene_info <- gtf_df[V3 == "gene"]
+  gene_info <-  gtf_df[V3 == "gene"]
+
   
   # Efficiently extract gene information
   gene_info[, c("gene_id", "gene_name", "gene_biotype") := 
@@ -29,7 +30,7 @@ load_gtf <- function(gtf_file, cores = 1) {
   gene_info[, strand := V7]
   
   # Create gene_info table
-  gene_info <- data.table::unique(gene_info[, .(gene_id, gene_name, gene_biotype)])
+  gene_info <- unique(gene_info[, .(gene_id, gene_name, gene_biotype)])
   data.table::setkey(gene_info, gene_id)
   
   
@@ -48,7 +49,7 @@ load_gtf <- function(gtf_file, cores = 1) {
   exon_info[, chromStart := V4]
   exon_info[, chromEnd := V5]
   
-  exon_info <- data.table::unique(exon_info[, .(gene_id, chrom, chromStart, chromEnd, strand)])
+  exon_info <- unique(exon_info[, .(gene_id, chrom, chromStart, chromEnd, strand)])
   data.table::setkey(exon_info, gene_id)
   
   # Extract unique gene IDs from exons
@@ -80,7 +81,7 @@ load_gtf <- function(gtf_file, cores = 1) {
   exon_reference <- data.table::rbindlist(extract_distal)
   exon_reference[, c("chrom", "strand") := lapply(.SD, as.factor), .SDcols = c("chrom", "strand")]
   exon_reference[, c("chromStart", "chromEnd") := lapply(.SD, as.numeric), .SDcols = c("chromStart", "chromEnd")]
-  gene_reference <- data.table::merge(exon_reference, gene_info, by = "gene_id", all.x =  TRUE)
+  gene_reference <- merge(exon_reference, gene_info, by = "gene_id", all.x =  TRUE)
   gene_reference$gene_id <- gsub('"', '', gene_reference$gene_id)
   gene_reference$gene_name <- gsub('"', '', gene_reference$gene_name)
   gene_reference$gene_biotype<- gsub('"', '', gene_reference$gene_biotype)

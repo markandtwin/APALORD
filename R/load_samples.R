@@ -22,16 +22,16 @@ load_samples <- function(infile1, infile2, group1="group1", group2="group2") {
     file1 <- list.files(path = sample, pattern="OUT.read_assignments.tsv",full.names = T)
     sample_gene_reads <- data.table::fread(file1, header = TRUE, sep = "\t", skip = 2)
     colnames(sample_gene_reads)[1] <- "read_id"
-    sample_gene_reads <- data.table::unique(sample_gene_reads[,c(1,3,5)], by = "read_id")
+    sample_gene_reads <- unique(sample_gene_reads[,c(1,3,5)], by = "read_id")
     
     # Read bed file and remove duplicates
     file2 <- list.files(path = sample, pattern="OUT.corrected_reads.bed",full.names = T)
     sample_reads_bed <- data.table::fread(file2, header = TRUE, sep = "\t")
     colnames(sample_reads_bed)[1] <- "chrom"
-    sample_reads_bed <- data.table::unique(sample_reads_bed[,1:4], by = "name")
+    sample_reads_bed <- unique(sample_reads_bed[,1:4], by = "name")
     
     # Merge data
-    sample_reads <- data.table::merge(sample_gene_reads, sample_reads_bed, by.x = "read_id", by.y = "name", all.x = TRUE)
+    sample_reads <- merge(sample_gene_reads, sample_reads_bed, by.x = "read_id", by.y = "name", all.x = TRUE)
     
     # Add columns for sample and treatment
     sample_reads[, sample := sample]

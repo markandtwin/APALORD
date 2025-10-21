@@ -16,20 +16,24 @@ PAU_test <- function(PAU_data,reads, P_cutoff=0.1){
 #  control_sample <- subset(sample_info, treatment==control)$sample
 #  experimental_sample <- subset(sample_info, treatment==experimental)$sample
   sampleData <- data.frame(row.names = sample_info$sample,
-                           condition = sample_info$treatment)
-  dxd <- DEXSeq::DEXSeqDataSet(round(countData,0), sampleData, 
-                        design= ~ sample + exon + condition:exon, 
-                        featureID=featureID, groupID=groupID)
-  dxd_norm <- DEXSeq::estimateSizeFactors(dxd)
-  dxd_est <- DEXSeq::estimateDispersions(dxd_norm)
+                           condition = factor(sample_info$treatment))
   
-  dxr1 <- DEXSeq::DEXSeq(dxd)
-  DEXSeq::plotMA( dxr1, alpha = P_cutoff, cex=0.8 )
+  suppressMessages(suppressWarnings({
+    dxd <- DEXSeq::DEXSeqDataSet(round(countData,0), sampleData, 
+                                 design= ~ sample + exon + condition:exon, 
+                                 featureID=featureID, groupID=groupID)
+    dxd_norm <- DEXSeq::estimateSizeFactors(dxd)
+    dxd_est <- DEXSeq::estimateDispersions(dxd_norm)
+    
+    dxr1 <- DEXSeq::DEXSeq(dxd)
+    DEXSeq::plotMA( dxr1, alpha = P_cutoff, cex=0.8 )
+  }))
+  
   
   dxrSig <- subset(as.data.frame(dxr1))
   PAU_data[, PAS_name := paste(gene_id, PAS, sep = ":")]
   dxrSig[, "PAS_name"] <-row.names(dxrSig)
-  PAU_test_data <- data.table::merge(PAU_data[,c("gene_id","chrom","strand","gene_name","PAS","PAS_name" )], dxrSig, by = "PAS_name")
+  PAU_test_data <- merge(PAU_data[,c("gene_id","chrom","strand","gene_name","PAS","PAS_name" )], dxrSig, by = "PAS_name")
   PAU_test_data <- PAU_test_data[, !c("groupID","featureID","exonBaseMean","dispersion","genomicData"), with = FALSE]
   return(PAU_test_data)
 }

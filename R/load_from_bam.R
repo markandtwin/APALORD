@@ -72,16 +72,16 @@ load_from_bam <- function(infile1, infile2, group1="group1", group2="group2",gtf
       sample = infile1[i],
       treatment = group1
     )
-    read_data <-data.table::unique(read_data, by = "read_id")
+    read_data <-unique(read_data, by = "read_id")
     # Assign to gene
     
     if(bambu){
-      Genes <- intersect(data.table::unique(rowData(se.multiSample[[i]])$GENEID),genes$gene_id)
+      Genes <- intersect(unique(rowData(se.multiSample[[i]])$GENEID),genes$gene_id)
       results_list <- pbmclapply(Genes, assign_gene, mc.cores = cores)
       
       # Combine results
       read_gene_map <- data.table::rbindlist(results_list, use.names = TRUE, fill = TRUE)
-      read_gene_map <- data.table::unique(read_gene_map, by = "read_id")
+      read_gene_map <- unique(read_gene_map, by = "read_id")
       read_data[read_id %in% read_gene_map$read_id, gene_id := read_gene_map$gene_id[match(read_id, read_gene_map$read_id)]]
     }else{
       overlaps <- findOverlaps(reads, genes)
@@ -116,16 +116,16 @@ load_from_bam <- function(infile1, infile2, group1="group1", group2="group2",gtf
       sample = infile2[i],
       treatment = group2
     )
-    read_data <-data.table::unique(read_data, by = "read_id")
+    read_data <-unique(read_data, by = "read_id")
     # Assign to gene
     i <- i+length(infile1)
     if(bambu){
-      Genes <- intersect(data.table::unique(rowData(se.multiSample[[i]])$GENEID),genes$gene_id)
+      Genes <- intersect(unique(rowData(se.multiSample[[i]])$GENEID),genes$gene_id)
       results_list <- pbmcapply::pbmclapply(Genes, assign_gene, mc.cores = cores)
       
       # Combine results
       read_gene_map <- data.table::rbindlist(results_list, use.names = TRUE, fill = TRUE)
-      read_gene_map <- data.table::unique(read_gene_map, by = "read_id")
+      read_gene_map <- unique(read_gene_map, by = "read_id")
       read_data[read_id %in% read_gene_map$read_id, gene_id := read_gene_map$gene_id[match(read_id, read_gene_map$read_id)]]
     }else{
       overlaps <- findOverlaps(reads, genes)

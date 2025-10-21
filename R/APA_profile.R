@@ -22,7 +22,7 @@ APA_profile <- function(gene_reference, reads, control, experimental,
                         cores=1, direct_RNA=FALSE,internal_priming=F,pattern="post",genome_file=NULL){
   if(internal_priming){
     genome <- Rsamtools::FaFile(genome_file)
-    open(genome)
+    Rsamtools::open(genome)
     genome
   }
   
@@ -42,14 +42,14 @@ APA_profile <- function(gene_reference, reads, control, experimental,
   genes <- genes[genes != "."]
   
   # Pre-allocate the APA_table
-  APA_table <- data.table(gene_id = genes, 
+  APA_table <- data.table::data.table(gene_id = genes, 
                           short_gene_id = gsub("\\.\\d+$", "", genes), 
                           APA_change = NA, pvalue = NA, APA_type = "No APA")
   
   # Merge APA_table with gene_info
   gene_info <-gene_reference
   APA_table_name <- merge(APA_table, gene_info, by = "gene_id", all.x = TRUE)
-  setkey(APA_table_name, gene_id)  # Set key for faster subsetting
+  data.table::setkey(APA_table_name, gene_id)  # Set key for faster subsetting
   
   find_match <- function(a, b_vec) {
     distances <- abs(a - b_vec)
@@ -86,7 +86,7 @@ APA_profile <- function(gene_reference, reads, control, experimental,
       density_vals <- as.numeric(prop.table(freq_table))
       peak_indices <- which(density_vals >= min(sort(density_vals, decreasing = TRUE)[1:50], na.rm = TRUE))
       
-      peaks_df <- data.table(Value = as.numeric(names(freq_table))[peak_indices], 
+      peaks_df <- data.table::data.table(Value = as.numeric(names(freq_table))[peak_indices], 
                              Frequency = as.numeric(freq_table[peak_indices]), 
                              Density = 100 * density_vals[peak_indices])
       peaks_df <- peaks_df[order(Value)]
@@ -110,7 +110,7 @@ APA_profile <- function(gene_reference, reads, control, experimental,
         
         
         # Combine peak groups
-        combined_df <- rbindlist(lapply(split(df, group), function(group_data) {
+        combined_df <- data.table::rbindlist(lapply(split(df, group), function(group_data) {
           max_density_row <- group_data[which.max(group_data$Density), ]
           max_density_row$Frequency <- sum(group_data$Frequency)
           max_density_row$Density <- sum(group_data$Density)
@@ -123,14 +123,14 @@ APA_profile <- function(gene_reference, reads, control, experimental,
       call_df <- combined_df[combined_df$Density >= min_percent & combined_df$Frequency >=5, ]
       call_df <- call_df[order(call_df$Value, decreasing = FALSE), ]
       
-      False_df <- data.table()
+      False_df <- data.table::data.table()
       if (nrow(call_df) > 0) {
         PAS_gene <- gene_vector[rep(1, nrow(call_df)),]
         PAS_gene$PAS <- call_df$Value
         if (direct_RNA==F&internal_priming){PAS_gene <- Internal_priming(PAS_gene,pattern=pattern,genome=genome)}
         if (nrow(PAS_gene)<nrow(call_df)){
-          False_df <- as.data.table(call_df)[!Value%in%PAS_gene$PAS]
-##          call_df <- as.data.table(call_df)[Value%in%PAS_gene$PAS]
+          False_df <- data.table::as.data.table(call_df)[!Value%in%PAS_gene$PAS]
+##          call_df <- data.table::as.data.table(call_df)[Value%in%PAS_gene$PAS]
         }
 
         PAS_gene_table <- as.vector(c(length(call_df$Value),paste(call_df$Value, collapse = ",")))
@@ -210,12 +210,12 @@ APA_profile <- function(gene_reference, reads, control, experimental,
 
         for (group in c(control,experimental)){
           group_all <- gene_all[treatment==group]
-          PAS_gene <- data.table(
+          PAS_gene <- data.table::data.table(
             gene = rep(gene, length(as.numeric(unlist(strsplit(PAS_info[2], split = ","))))),
             PAS = as.numeric(unlist(strsplit(PAS_info[2], split = ",")))
           )
-          group_corrected <- as.data.table(match_fun(strand,reads_data =  group_all,PAS_gene$PAS))
-          PAS_group_counts <- as.data.table(table(group_corrected$match)) 
+          group_corrected <- data.table::as.data.table(match_fun(strand,reads_data =  group_all,PAS_gene$PAS))
+          PAS_group_counts <- data.table::as.data.table(table(group_corrected$match)) 
           if(nrow(PAS_group_counts)>0){
             colnames(PAS_group_counts)<-c("PAS","reads")
             PAS_group_counts[, PAS := as.double(PAS)]
@@ -265,7 +265,7 @@ APA_profile <- function(gene_reference, reads, control, experimental,
   output <- pbmcapply::pbmclapply(genes, APA_fun, mc.cores = cores)
   
   # Combine the results
-  output_df <- rbindlist(output, fill = T)
+  output_df <- data.table::rbindlist(output, fill = T)
   output_df$number_of_PAS <- as.numeric(output_df$number_of_PAS)
   output_df <- output_df[, !c("last_exon_chromStart", "last_exon_chromEnd"), with = FALSE]
   return(output_df)

@@ -1,6 +1,6 @@
 Package: APALORD
 Title: Alternative polyadenylation (APA) analysis using long read RNA-seq data
-Version: 0.1
+Version: 1.0.0
 Authors@R: 
     person("Zhiping", "Zhang", email= "zhzhang@uchc.edu", role = c("aut", "cre"))
 Description: Using long read RNA-seq to detect the polyadenylation sites (PASs) and monitor the APA change across conditions.
@@ -8,6 +8,7 @@ License: GPL-3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
+biocViews: Software, Transcriptomics, GeneExpression, LongRead
 Imports:
     DEXSeq,
     pbmcapply,
@@ -30,5 +31,4 @@ Suggests:
     rmarkdown
 VignetteBuilder: knitr
 Depends: 
-    R (>= 4.0)
-
+    R (>= 4.2)

@@ -21,7 +21,7 @@ end_PAS_examine <- function(PAU_data,reads,P_cutoff=0.05,FC_cutoff=1.5,delta=10,
   samples1_col <- paste0(samples1, " PAU", sep="")
   samples2_col <- paste0(samples2, " PAU", sep="")
   genes <- unique(PAU_data$gene_id)
-  dPAU_data <-data.table(matrix(-100, ncol = length(samples1_col)+length(samples2_col), nrow = length(genes)))
+  dPAU_data <-data.table::data.table(matrix(-100, ncol = length(samples1_col)+length(samples2_col), nrow = length(genes)))
   colnames(dPAU_data) <- c(samples1_col,samples2_col)
   dPAU_data$gene_id <- genes
   PAU_test_fun<-function(gene){
@@ -62,8 +62,8 @@ end_PAS_examine <- function(PAU_data,reads,P_cutoff=0.05,FC_cutoff=1.5,delta=10,
       }
     }
   }
-  output <- pbmclapply(genes, PAU_test_fun, mc.cores = cores)
-  end_PAU_df <- rbindlist(output, fill = T)
+  output <- pbmcapply::pbmclapply(genes, PAU_test_fun, mc.cores = cores)
+  end_PAU_df <- data.table::rbindlist(output, fill = T)
  
   APA_table <-end_PAU_df
   APA_table$P_adj <-p.adjust(APA_table$pvalue, method = "fdr")

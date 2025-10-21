@@ -23,7 +23,7 @@ PAS_calling <- function(gene_reference, reads,min_reads=5, min_percent=1,cores=1
   gene_info <- gene_reference[,.(gene_id,chrom, strand, gene_name, gene_biotype)]
   reads$read_id <-c(1:nrow(reads))
   reads_dt <- data.table::as.data.table(reads[, !(c("sample","treatment")), with = FALSE])
-  setkey(reads_dt, gene_id)
+  data.table::setkey(reads_dt, gene_id)
   
   # Pre-filter the reads
   reads_dt <- reads_dt[gene_id%in%unique(reads_dt[,.N, by = gene_id][N >= min_reads]$gene_id)]  # Filter genes with fewer than min_reads
@@ -32,7 +32,7 @@ PAS_calling <- function(gene_reference, reads,min_reads=5, min_percent=1,cores=1
   
   
   PAS_table <- gene_info[gene_id %in% genes]
-  setkey(PAS_table, gene_id)  # Ensure efficient subsetting
+  data.table::setkey(PAS_table, gene_id)  # Ensure efficient subsetting
   
   find_match <- function(a, b_vec) {
     distances <- abs(a - b_vec)
@@ -107,7 +107,7 @@ PAS_calling <- function(gene_reference, reads,min_reads=5, min_percent=1,cores=1
         
         
         # Combine peak groups
-        combined_df <- rbindlist(lapply(split(df, group), function(group_data) {
+        combined_df <- data.table::rbindlist(lapply(split(df, group), function(group_data) {
           max_density_row <- group_data[which.max(group_data$Density), ]
           max_density_row$Frequency <- sum(group_data$Frequency)
           max_density_row$Density <- sum(group_data$Density)
