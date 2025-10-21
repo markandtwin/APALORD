@@ -23,7 +23,8 @@ Imports:
     bambu,
     purrr,
     GenomicRanges,
-    IRanges
+    IRanges,
+    BiocParallel
 Suggests: 
     knitr,
     devtools,
