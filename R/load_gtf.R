@@ -9,7 +9,7 @@
 
 load_gtf <- function(gtf_file, cores = 1) {
   # Read data using fread for speed
-  gtf_df <- data.table::fread(gtf_file, header = T, sep = "\t",data.table = T)
+  gtf_df <- data.table::fread(gtf_file, header = F, sep = "\t",data.table = T)
   # Filter and process 'gene' annotations
   gene_info <-  gtf_df[V3 == "gene"]
 

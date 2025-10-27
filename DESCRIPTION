@@ -23,8 +23,7 @@ Imports:
     bambu,
     purrr,
     GenomicRanges,
-    IRanges,
-    BiocParallel
+    IRanges
 Suggests: 
     knitr,
     devtools,
@@ -33,3 +32,4 @@ Suggests:
 VignetteBuilder: knitr
 Depends: 
     R (>= 4.2)
+    
