@@ -22,7 +22,7 @@ APA_profile <- function(gene_reference, reads, control, experimental,
                         cores=1, direct_RNA=FALSE,internal_priming=F,pattern="post",genome_file=NULL){
   if(internal_priming){
     genome <- Rsamtools::FaFile(genome_file)
-    Rsamtools::open(genome)
+    open(genome)
     genome
   }
   
@@ -143,8 +143,8 @@ APA_profile <- function(gene_reference, reads, control, experimental,
   ks_tie_adjusted <- function(x, y) {
     x <- as.numeric(x)
     y <- as.numeric(y)
-    n1 <- length(x)
-    n2 <- length(y)
+    n1 <- as.numeric(length(x))
+    n2 <- as.numeric(length(y))
     N <- n1 + n2
     
     vals <- sort(unique(c(x, y)))
@@ -178,7 +178,7 @@ APA_profile <- function(gene_reference, reads, control, experimental,
     gene_all <- reads[gene_id == gene]
     APA_gene <- APA_table_name[gene_id == gene]
     
-    if (direct_RNA == T) {
+    if (direct_RNA == TRUE) {
       gene_all <- gene_all[strand == gene_info[gene, strand]]
     }
     

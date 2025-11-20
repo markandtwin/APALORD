@@ -23,6 +23,7 @@ PAU_by_sample <- function(gene_reference, reads, min_reads=5, min_percent=1, cor
   reads$read_id <-c(1:nrow(reads))
   reads_dt <- data.table::as.data.table(reads[, !("treatment"), with = FALSE])
   data.table::setkey(reads_dt, gene_id)
+
   
   # Pre-filter the reads
   reads_dt <- reads_dt[gene_id%in%unique(reads_dt[,.N, by = gene_id][N >= min_reads]$gene_id)]  # Filter genes with fewer than min_reads

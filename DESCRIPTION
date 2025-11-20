@@ -32,4 +32,4 @@ Suggests:
 VignetteBuilder: knitr
 Depends: 
     R (>= 4.2)
-    
+

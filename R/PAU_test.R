@@ -18,7 +18,7 @@ PAU_test <- function(PAU_data,reads, P_cutoff=0.1){
   sampleData <- data.frame(row.names = sample_info$sample,
                            condition = factor(sample_info$treatment))
   
-  suppressMessages(suppressWarnings({
+  suppressWarnings({
     dxd <- DEXSeq::DEXSeqDataSet(round(countData,0), sampleData, 
                                  design= ~ sample + exon + condition:exon, 
                                  featureID=featureID, groupID=groupID)
@@ -27,7 +27,7 @@ PAU_test <- function(PAU_data,reads, P_cutoff=0.1){
     
     dxr1 <- DEXSeq::DEXSeq(dxd)
     DEXSeq::plotMA( dxr1, alpha = P_cutoff, cex=0.8 )
-  }))
+  })
   
   
   dxrSig <- subset(as.data.frame(dxr1))
