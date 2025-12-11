@@ -27,14 +27,14 @@ APA_profile <- function(gene_reference, reads, control, experimental,
   }
   
   reads$read_id <-c(1:nrow(reads))
-  reads <- data.table::copy(reads)[, !("sample"), with = FALSE]
+#  reads <- data.table::copy(reads)[, !("sample"), with = FALSE]
 
   # Filter and group control and experimental data
   control_reads <- reads[treatment== control]
   gene_counts <- control_reads[, .N, by = gene_id][N >= min_counts]
   control_df <- control_reads[gene_id %in% gene_counts$gene_id]
   experimental_reads <- reads[treatment== experimental]
-  gene_counts <- experimental_reads[, .N, by = gene_id][N >= min_counts]
+  gene_counts <- experimental_reads[, .N, by = .(gene_id,sample)][N >= min_counts]
   experimental_df <- experimental_reads[gene_id %in% gene_counts$gene_id]
   
   # Genes of interest

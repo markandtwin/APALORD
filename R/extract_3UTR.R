@@ -36,7 +36,7 @@ extract_3UTR <- function(gtf_file, cores = 1) {
     if (strand == "+") {
       single_tx_info[,"PAS"] <- tx_info[transcript_id == tx]$chromEnd
     } else if (strand == "-") {
-      single_tx_info[,"PAS"] <- (tx_info[transcript_id == tx]$chromStart+1)
+      single_tx_info[,"PAS"] <- (tx_info[transcript_id == tx]$chromStart)
     }
     return(single_tx_info)
   }
