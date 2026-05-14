@@ -10,6 +10,7 @@
 
 Internal_priming <- function(PAS_data, pattern="post", genome = NULL){
   PAS_data$A_enrich <- as.numeric(NA)
+  PAS_data$PAS<-as.numeric(PAS_data$PAS)
   for(n in 1:nrow(PAS_data)) {
     gene_PAS <-PAS_data[n,]
     if(gene_PAS$strand=="+"){

@@ -11,9 +11,9 @@
 
 APA_plot <- function(APA_data,P_cutoff=0.05,delta=0.1,internal_priming_exclude=F,split.by.APA_type=F){
   if(internal_priming_exclude){
-    APA_table <-APA_data[is.na(internal_priming)&number_of_PAS>1]
+    APA_table <-APA_data[is.na(internal_priming)]
   }else {
-    APA_table <-APA_data[number_of_PAS>1]
+    APA_table <-APA_data
   }
   APA_table$P_adj <-p.adjust(APA_table$pvalue, method = "fdr")
   APA_table$Col <- "gray"

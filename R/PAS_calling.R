@@ -4,17 +4,18 @@
 #' @param gene_reference information extracted from gtf file
 #' @param reads information from RNAseq samples 
 #' @param cores number of threads used for the computation
-#' @param min_reads minium read counts required at single gene level for PAS calling
-#' @param min_percent minium percent required for a PAS to be included (0-100)
+#' @param min_reads minimum read counts required at single gene level for PAS calling per sample
+#' @param min_percent minimum percent required for a PAS to be included (0-100)
 #' @param direct_RNA whether or not the data is direct RNAseq 
 #' @param internal_priming whether or not PASs subject to internal priming filtering
-#' @param pattern to look for internal priming sequencing surrouding PAS, either "pre", "post" or "both".
+#' @param pattern to look for internal priming sequencing surrounding PAS, either "pre", "post" or "both".
 #' @param genome_file path to a genome sequence file (.fa or .fasta)
+#' @param bin max distance of cleavage site from PAS
 #' @return a table showing the top PASs for each single gene with enough depth in the data and also a bed6 file table for all the PASs
 #' @export
 
 PAS_calling <- function(gene_reference, reads,min_reads=5, min_percent=1,cores=1,
-                        direct_RNA=FALSE,internal_priming=F,pattern = "post", genome_file=NULL){
+                        direct_RNA=FALSE,internal_priming=F,pattern = "post", genome_file=NULL,bin=50){
   if(internal_priming){
     genome <- Rsamtools::FaFile(genome_file)
     Rsamtools::open(genome)
@@ -22,7 +23,8 @@ PAS_calling <- function(gene_reference, reads,min_reads=5, min_percent=1,cores=1
   }
   gene_info <- gene_reference[,.(gene_id,chrom, strand, gene_name, gene_biotype)]
   reads$read_id <-c(1:nrow(reads))
-  reads_dt <- data.table::as.data.table(reads[, !(c("sample","treatment")), with = FALSE])
+  samples <- unique(reads$sample)
+  reads_dt <- data.table::as.data.table(reads[, !(c("treatment")), with = FALSE])
   data.table::setkey(reads_dt, gene_id)
   
   # Pre-filter the reads
@@ -31,20 +33,21 @@ PAS_calling <- function(gene_reference, reads,min_reads=5, min_percent=1,cores=1
   genes <- as.vector(genes[genes != "."])
   
   
+  
   PAS_table <- gene_info[gene_id %in% genes]
   data.table::setkey(PAS_table, gene_id)  # Ensure efficient subsetting
   
   find_match <- function(a, b_vec) {
     distances <- abs(a - b_vec)
-    if (any(distances <= 20)) {
+    if (any(distances <= bin)) {
       return(b_vec[which.min(distances)])  # Return closest match
     } else {
-      return(NA)  # No match within 20
+      return(NA)  # No match within bin
     }
   }
   
-  match_fun <- function(strand,reads_data,PAS_gene){
-    B <- PAS_gene$PAS
+  match_fun <- function(strand,reads_data,call_df){
+    B <- call_df$Value
     if(strand=="+"){
       A <- reads_data$chromEnd
       matches <- sapply(A, find_match, b_vec = B)
@@ -56,7 +59,7 @@ PAS_calling <- function(gene_reference, reads,min_reads=5, min_percent=1,cores=1
       reads_data$match <-matches
     }
     PAS_sample_counts <- table(reads_data$match)
-    return(PAS_sample_counts)
+    return(reads_data)
   }
   
   # Vectorized PAU function
@@ -99,7 +102,7 @@ PAS_calling <- function(gene_reference, reads,min_reads=5, min_percent=1,cores=1
         for (i in 2:nrow(df)) {
           group_df <- df[which(group==current_group),]
           rep_val <- group_df[which.max(group_df$Frequency),"Value"]
-          if (df$Value[i] - rep_val > 20) {
+          if (df$Value[i] - rep_val > bin) {
             current_group <- current_group + 1
           }
           group[i] <- current_group
@@ -117,12 +120,26 @@ PAS_calling <- function(gene_reference, reads,min_reads=5, min_percent=1,cores=1
         combined_df <-df
       }
       
-      call_df <- combined_df[combined_df$Density >= min_percent & combined_df$Frequency >=5, ]
+      call_df <- combined_df[combined_df$Density >= min_percent & combined_df$Frequency >=min_reads, ]
       call_df <- call_df[order(call_df$Value, decreasing = F), ]
       
  
       if (nrow(call_df) > 0) {
-        call_df$Density <- round(call_df$Density, 2)
+        PAS_sample_counts_raw <- data.table::as.data.table(match_fun(strand,reads_data =  gene_all,call_df))
+        tab <- table(PAS_sample_counts_raw$match)
+        tab[tab >= min_reads]
+        keep <- names(tab[tab >= min_reads])
+        PAS_sample_counts <- PAS_sample_counts_raw[match %in% keep]
+        if(nrow(PAS_sample_counts)>0){
+          PAS_counts <- data.table::as.data.table(table(PAS_sample_counts$match))
+          colnames(PAS_counts)<-c("Value","reads")
+          PAS_counts[, Value := as.numeric(Value)]
+          call_df <- merge(call_df, PAS_counts, by = "Value", all.y = TRUE)
+        }else{
+          call_df[,"reads"] <- 0
+        }
+        call_df[, "PAU"] <- round(100*call_df[,"reads"]/nrow(gene_all),3)
+
         PAS_gene <- gene_info[gene, ][rep(1, nrow(call_df)),]
         PAS_gene$PAS <- call_df$Value
         if (direct_RNA==F&internal_priming){PAS_gene <- Internal_priming(PAS_gene, pattern = pattern,genome = genome)}
@@ -130,17 +147,7 @@ PAS_calling <- function(gene_reference, reads,min_reads=5, min_percent=1,cores=1
 #         False_df <- data.table::as.data.table(call_df)[Value!%in%PAS_gene$PAS]
           call_df <- data.table::as.data.table(call_df)[Value%in%PAS_gene$PAS]
         }
-        call_df$PAS <- call_df$Value
-        PAS_sample_counts <- data.table::as.data.table(match_fun(strand,reads_data =  gene_all,call_df))
-        if(nrow(PAS_sample_counts)>0){
-          colnames(PAS_sample_counts)<-c("Value","reads")
-          PAS_sample_counts[, Value := as.double(Value)]
-          call_df <- merge(call_df, PAS_sample_counts, by = "Value", all.x = TRUE)
-        }else{
-          call_df[,"reads"] <- 0
-        }
-        call_df[, "PAU"] <- round(100*call_df[,"reads"]/nrow(gene_all),3)
-        
+  
         
         if(nrow(call_df)>0){
           add_df<- data.frame(matrix(ncol=6, nrow=(length(call_df$Value))))
@@ -148,7 +155,7 @@ PAS_calling <- function(gene_reference, reads,min_reads=5, min_percent=1,cores=1
             chrom = gene_all$chrom[1], # Numeric column
             start = as.numeric(call_df$Value)-1, # Numeric column
             end = as.numeric(call_df$Value),
-            name = gene_info[gene,gene_name],
+            name = paste(gene,gene_info[gene,gene_name]),
             density= as.numeric(call_df$PAU),
             strand = gene_info[gene,"strand"])
           return(add_df)

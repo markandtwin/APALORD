@@ -13,7 +13,8 @@ PAU_by_sample(
   direct_RNA = F,
   internal_priming = F,
   pattern = "post",
-  genome_file = NULL
+  genome_file = NULL,
+  bin = 50
 )
 }
 \arguments{
@@ -21,7 +22,7 @@ PAU_by_sample(
 
 \item{reads}{information from RNAseq samples}
 
-\item{min_reads}{minium reads count required at single gene level for PAS calling and PAU calculation}
+\item{min_reads}{minium reads count required at single gene level for PAS calling and PAU calculation per sample}
 
 \item{min_percent}{minium percent required for a PAS to be included (0-100)}
 
@@ -34,6 +35,8 @@ PAU_by_sample(
 \item{pattern}{to look for internal priming sequencing surrouding PAS, either "pre", "post" or "both".}
 
 \item{genome_file}{path to a genome sequence file (.fa or .fasta)}
+
+\item{bin}{max distance of cleavage site from PAS}
 }
 \value{
 a table showing the uasage of top PASs for each single gene with enough depth in the dataset of each sample

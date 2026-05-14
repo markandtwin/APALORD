@@ -13,7 +13,8 @@ PAS_calling(
   direct_RNA = FALSE,
   internal_priming = F,
   pattern = "post",
-  genome_file = NULL
+  genome_file = NULL,
+  bin = 50
 )
 }
 \arguments{
@@ -21,9 +22,9 @@ PAS_calling(
 
 \item{reads}{information from RNAseq samples}
 
-\item{min_reads}{minium read counts required at single gene level for PAS calling}
+\item{min_reads}{minimum read counts required at single gene level for PAS calling per sample}
 
-\item{min_percent}{minium percent required for a PAS to be included (0-100)}
+\item{min_percent}{minimum percent required for a PAS to be included (0-100)}
 
 \item{cores}{number of threads used for the computation}
 
@@ -31,9 +32,11 @@ PAS_calling(
 
 \item{internal_priming}{whether or not PASs subject to internal priming filtering}
 
-\item{pattern}{to look for internal priming sequencing surrouding PAS, either "pre", "post" or "both".}
+\item{pattern}{to look for internal priming sequencing surrounding PAS, either "pre", "post" or "both".}
 
 \item{genome_file}{path to a genome sequence file (.fa or .fasta)}
+
+\item{bin}{max distance of cleavage site from PAS}
 }
 \value{
 a table showing the top PASs for each single gene with enough depth in the data and also a bed6 file table for all the PASs

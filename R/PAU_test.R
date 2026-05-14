@@ -10,9 +10,11 @@
 PAU_test <- function(PAU_data,reads, P_cutoff=0.1){
   groupID <- PAU_data$gene_id
   featureID <- as.character(PAU_data$PAS)
-  countData <- PAU_data[, .SD, .SDcols = grep("reads$", names(PAU_data))]
+  cols <- names(PAU_data)
+  count_cols <- cols[grepl("reads$", cols) & !grepl("host gene", cols)]
+  countData <- PAU_data[, .SD, .SDcols = count_cols]
   data.table::setnames(countData, gsub(" reads$", "", names(countData)))
-  sample_info <-unique(reads[, .SD, .SDcols = (ncol(reads)-1):ncol(reads)])
+  sample_info <-unique(reads[, .(sample, treatment)])
 #  control_sample <- subset(sample_info, treatment==control)$sample
 #  experimental_sample <- subset(sample_info, treatment==experimental)$sample
   sampleData <- data.frame(row.names = sample_info$sample,
@@ -22,16 +24,16 @@ PAU_test <- function(PAU_data,reads, P_cutoff=0.1){
     dxd <- DEXSeq::DEXSeqDataSet(round(countData,0), sampleData, 
                                  design= ~ sample + exon + condition:exon, 
                                  featureID=featureID, groupID=groupID)
-    dxd_norm <- DEXSeq::estimateSizeFactors(dxd)
-    dxd_est <- DEXSeq::estimateDispersions(dxd_norm)
-    
-    dxr1 <- DEXSeq::DEXSeq(dxd)
-    DEXSeq::plotMA( dxr1, alpha = P_cutoff, cex=0.8 )
+    dxd <- DEXSeq::estimateSizeFactors(dxd)
+    dxd <- DEXSeq::estimateDispersions(dxd)
+    dxd <- DEXSeq::testForDEU(dxd)
+    dxd <- DEXSeq::estimateExonFoldChanges(dxd, fitExpToVar = "condition")
+    DEXSeq::plotMA( dxd, alpha = P_cutoff, cex=0.8, fill=T)
   })
   
   
-  dxrSig <- subset(as.data.frame(dxr1))
-  PAU_data[, PAS_name := paste(gene_id, PAS, sep = ":")]
+  dxrSig <- as.data.frame(DEXSeq::DEXSeqResults(dxd))
+  PAU_data$PAS_name <- paste(PAU_data$gene_id, PAU_data$PAS, sep = ":")
   dxrSig[, "PAS_name"] <-row.names(dxrSig)
   PAU_test_data <- merge(PAU_data[,c("gene_id","chrom","strand","gene_name","PAS","PAS_name" )], dxrSig, by = "PAS_name")
   PAU_test_data <- PAU_test_data[, !c("groupID","featureID","exonBaseMean","dispersion","genomicData"), with = FALSE]

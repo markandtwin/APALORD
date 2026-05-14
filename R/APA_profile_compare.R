@@ -18,7 +18,7 @@
 #' @export
 
 
-APA_profile <- function(gene_reference, reads, control, experimental, 
+APA_profile_compare <- function(gene_reference, reads, control, experimental, 
                         min_counts=10, min_reads=5, min_percent=1, 
                         cores=1, direct_RNA=FALSE,internal_priming=F,pattern="post",genome_file=NULL,bin=50){
   if(internal_priming){
@@ -152,7 +152,7 @@ APA_profile <- function(gene_reference, reads, control, experimental,
         if (direct_RNA==F&internal_priming){PAS_gene <- Internal_priming(PAS_gene, pattern = pattern,genome = genome)}
         if (nrow(PAS_gene)<nrow(call_df)){
           False_df <- data.table::as.data.table(call_df)[!Value%in%PAS_gene$PAS]
-#          call_df <- data.table::as.data.table(call_df)[Value%in%PAS_gene$PAS]
+          call_df <- data.table::as.data.table(call_df)[Value%in%PAS_gene$PAS]
         }else{
           False_df <- NA
         }
@@ -162,38 +162,32 @@ APA_profile <- function(gene_reference, reads, control, experimental,
   }
   
   # Adjusted KS test for discrete positional data
-  ks_tie_adjusted <- function(x, y) {
-    x <- as.numeric(x)
-    y <- as.numeric(y)
-    n1 <- as.numeric(length(x))
-    n2 <- as.numeric(length(y))
-    N <- n1 + n2
+  ks_tie_adjusted <- function(x, y, B = 5000, seed = NULL) {
+    x <- as.numeric(x); y <- as.numeric(y)
+    n1 <- length(x); n2 <- length(y)
+    pooled <- c(x, y)
+    vals <- sort(unique(pooled))
     
-    vals <- sort(unique(c(x, y)))
-    ecdf_x <- ecdf(x)
-    ecdf_y <- ecdf(y)
-    diffs <- ecdf_x(vals) - ecdf_y(vals)
-    
+    diffs <- ecdf(x)(vals) - ecdf(y)(vals)
     i <- which.max(abs(diffs))
-    D <- abs(diffs[i])
+    
+    D_obs <- abs(diffs[i])
     signedD <- diffs[i]
     max_diff_at <- vals[i]
     
-    # frequencies for tie adjustment
-    freq <- table(c(x, y)) / N
-    tie_var <- sum(freq * (1 - freq))
-    n_eff <- n1 * n2 / (n1 + n2)
+    if (!is.null(seed)) set.seed(seed)
+    D_perm <- replicate(B, {
+      idx <- sample.int(n1 + n2, n1, replace = FALSE)
+      x0 <- pooled[idx]; y0 <- pooled[-idx]
+      d0 <- ecdf(x0)(vals) - ecdf(y0)(vals)
+      max(abs(d0))
+    })
     
-    # adjusted z-score
-    z <- signedD / sqrt(tie_var / n_eff)
+    pval <- (1 + sum(D_perm >= D_obs)) / (B + 1)
     
-    # two-sided p-value from normal approximation
-    pval <- 2 * (1 - pnorm(abs(z)))
-    pval <- min(pval, 1)
-    
-    list(D = D, signedD = signedD, max_diff_at = max_diff_at, p.value = pval)
+    list(D = D_obs, signedD = signedD, max_diff_at = max_diff_at, p.value = pval,
+         n1 = n1, n2 = n2)
   }
-  
   
   # Define APA_fun optimized with data.table
   APA_fun <- function(gene) {
@@ -211,11 +205,8 @@ APA_profile <- function(gene_reference, reads, control, experimental,
       PAS_all <- PAS_fun(gene_all,gene_vector, min_percent, min_reads)
       PAS_info <- PAS_all[[1]]
       if (direct_RNA==F&internal_priming){
-        if(isTRUE(is.na(PAS_all[[2]]))){
-          APA_gene[,"internal_priming"]<-NA
-        }else{
-          APA_gene[,"internal_priming"]<-ifelse(length(PAS_all[[2]]$Value)>0,paste(PAS_all[[2]]$Value, collapse = ","),as.numeric(NA))
-        }
+        False_PAS <- PAS_all[[2]]$Value
+        APA_gene[,"internal_priming"]<-ifelse(length(False_PAS)>0,paste(False_PAS, collapse = ","),as.numeric(NA))
       }
       
       if (is.null(PAS_info)){

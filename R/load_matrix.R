@@ -50,6 +50,6 @@ load_matrix <- function(infile, design = design) {
   reads_all <- data.table::rbindlist(reads_list)
   reads_all[, (base::setdiff(names(reads_all), c("chromStart", "chromEnd")) ) := lapply(.SD, as.factor), .SDcols = setdiff(names(reads_all), c("chromStart", "chromEnd"))]
   reads_all <-subset(reads_all,gene_id!=".")
-  reads_all$read_id <-seq_len(nrow(reads_all))
+#  reads_all$read_id <-seq_len(nrow(reads_all))
   return(reads_all[,c(2:7,1,8)])
 }

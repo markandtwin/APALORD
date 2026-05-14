@@ -2,6 +2,7 @@
 
 export(APA_plot)
 export(APA_profile)
+export(APA_profile_compare)
 export(Internal_priming)
 export(PAS_calling)
 export(PAU_by_sample)

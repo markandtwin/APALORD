@@ -4,20 +4,21 @@
 #' @param gene_reference information extracted from gtf file
 #' @param reads information from RNAseq samples
 #' @param cores number of threads used for the computation
-#' @param min_reads minium reads count required at single gene level for PAS calling and PAU calculation
+#' @param min_reads minium reads count required at single gene level for PAS calling and PAU calculation per sample
 #' @param min_percent minium percent required for a PAS to be included (0-100)
 #' @param direct_RNA whether or not the data is direct RNAseq 
 #' @param internal_priming whether or not PASs subject to internal priming filtering
 #' @param pattern to look for internal priming sequencing surrouding PAS, either "pre", "post" or "both".
 #' @param genome_file path to a genome sequence file (.fa or .fasta)
+#' @param bin max distance of cleavage site from PAS
 #' @return a table showing the uasage of top PASs for each single gene with enough depth in the dataset of each sample 
 #' @export
 
-PAU_by_sample <- function(gene_reference, reads, min_reads=5, min_percent=1, cores=1, direct_RNA=F,internal_priming=F,pattern="post",genome_file=NULL) {
+PAU_by_sample <- function(gene_reference, reads, min_reads=5, min_percent=1, cores=1, direct_RNA=F,internal_priming=F,pattern="post",genome_file=NULL,bin=50) {
   gene_info <- gene_reference[,c(1:2, 5:6)]
   if(internal_priming){
     genome <- Rsamtools::FaFile(genome_file)
-    Rsamtools::open(genome)
+    open(genome)
     genome
   }
   reads$read_id <-c(1:nrow(reads))
@@ -37,15 +38,15 @@ PAU_by_sample <- function(gene_reference, reads, min_reads=5, min_percent=1, cor
   
   find_match <- function(a, b_vec) {
     distances <- abs(a - b_vec)
-    if (any(distances <= 20)) {
+    if (any(distances <= bin)) {
       return(b_vec[which.min(distances)])  # Return closest match
     } else {
-      return(NA)  # No match within 20
+      return(NA)  # No match within bin distance
     }
   }
   
-  match_fun <- function(strand,reads_data,PAS_gene){
-    B <- PAS_gene$PAS
+  match_fun <- function(strand,reads_data,call_df){
+    B <- call_df$Value
     if(strand=="+"){
       A <- reads_data$chromEnd
       matches <- sapply(A, find_match, b_vec = B)
@@ -57,7 +58,7 @@ PAU_by_sample <- function(gene_reference, reads, min_reads=5, min_percent=1, cor
       reads_data$match <-matches
     }
     PAS_sample_counts <- table(reads_data$match)
-    return(PAS_sample_counts)
+    return(reads_data)
   }
   # Vectorized PAU function
   PAU_fun <- function(gene) {
@@ -99,7 +100,7 @@ PAU_by_sample <- function(gene_reference, reads, min_reads=5, min_percent=1, cor
         for (i in 2:nrow(df)) {
           group_df <- df[which(group==current_group),]
           rep_val <- group_df[which.max(group_df$Frequency),"Value"]
-          if (df$Value[i] - rep_val > 20) {
+          if (df$Value[i] - rep_val > bin) {
             current_group <- current_group + 1
           }
           group[i] <- current_group
@@ -116,30 +117,32 @@ PAU_by_sample <- function(gene_reference, reads, min_reads=5, min_percent=1, cor
       } else {
         combined_df <-df
       }
-      call_df <- combined_df[combined_df$Density >= min_percent & combined_df$Frequency >=5, ]
+      call_df <- combined_df[combined_df$Density >= min_percent & combined_df$Frequency >=min_reads, ]
       call_df <- call_df[order(call_df$Value, decreasing = F), ]
+      
       
       if (nrow(call_df) > 0) {
         call_df$Density <- round(call_df$Density, 2)
-        PAS_gene <- PAS_table[gene, 1:4][rep(1, nrow(call_df)),]
-        PAS_gene$PAS <- call_df$Value
-        if (direct_RNA==F&internal_priming){PAS_gene <- Internal_priming(PAS_gene,pattern=pattern,genome=genome)}
-
-        
-        # Parallelize per sample
-        if (all(table(gene_all$sample)>=min_reads)&nrow(PAS_gene) > 0) {
+      # Parallelize per sample
+        if (all(table(factor(gene_all$sample,levels = samples))>=min_reads)&nrow(call_df) > 0) {
+          PAS_sample_counts_raw <- data.table::as.data.table(match_fun(strand,reads_data =  gene_all,call_df))
+          tab <- table(PAS_sample_counts_raw$match)
+          keep <- names(tab[tab >= min_reads])
+          PAS_sample_counts <- PAS_sample_counts_raw[match %in% keep]
+          number_of_PAS <- length(names(table(PAS_sample_counts$match)))
+          PAS_gene <- PAS_table[gene, 1:4][rep(1, number_of_PAS),]
+          PAS_gene$PAS <- names(table(PAS_sample_counts$match))
+          all_matches <- PAS_gene$PAS
           for (sample_name in samples) {
-            sample_df <- gene_all[sample == sample_name]
-            PAS_sample_counts <- data.table::as.data.table(match_fun(strand,reads_data =  sample_df,PAS_gene))
-            if(nrow(PAS_sample_counts)>0){
-              colnames(PAS_sample_counts)<-c("PAS",paste(sample_name,"reads"))
-              PAS_sample_counts[, PAS := as.double(PAS)]
-              PAS_gene <- merge(PAS_gene, PAS_sample_counts, by = "PAS", all.x = TRUE)
-              PAS_gene[is.na(get(paste(sample_name,"reads"))), (paste(sample_name,"reads")) := 0L]
-            }else{
-              PAS_gene[,paste(sample_name,"reads")] <- 0
-            }
-            PAS_gene[, paste(sample_name,"PAU")] <- round(100*PAS_gene[,get(paste(sample_name,"reads"))]/nrow(sample_df),3)
+            sample_depth <-nrow(PAS_sample_counts_raw[sample == sample_name]) 
+            PAS_gene[,paste(sample_name,"reads")] <- as.integer(table(factor(PAS_sample_counts[sample == sample_name]$match,levels = all_matches)))
+            PAS_gene[, paste(sample_name,"PAU")] <- as.numeric(round(100*PAS_gene[,get(paste(sample_name,"reads"))]/sample_depth,3))
+            PAS_gene[, paste(sample_name,"host gene reads",sep=" ")] <- sample_depth
+          }
+          if (direct_RNA==F&internal_priming){
+            clean_PAS_gene <- Internal_priming(PAS_gene,pattern=pattern,genome=genome)
+            PAS_gene$internal_priming <- ifelse(paste(PAS_gene$gene_id, PAS_gene$PAS) %in%
+                                                  paste(clean_PAS_gene$gene_id, clean_PAS_gene$PAS),"no", "yes")
           }
           return(PAS_gene)
         }
@@ -150,6 +153,6 @@ PAU_by_sample <- function(gene_reference, reads, min_reads=5, min_percent=1, cor
   # Parallel processing
   PAU_output <- pbmcapply::pbmclapply(genes, PAU_fun, mc.cores = cores)
   PAU_table <-  data.table::rbindlist(PAU_output,fill = T)  # Combine results
-  
+  PAU_table$PAS <-  as.numeric(PAU_table$PAS)
   return(PAU_table)
 }
