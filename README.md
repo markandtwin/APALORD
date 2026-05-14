@@ -106,7 +106,7 @@ Alternatively, you can load all the samples at once by generating a sample sheet
 4: D7_1       D7
 5: D7_2        D7
 6: D7_3        D7
-```R
+```
 When you've run all the samples with IsoQuant in a command and the result is in the `OUT` directory, you're ready to load them:
 ```R
 # Load samples all at once
