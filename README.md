@@ -116,7 +116,7 @@ design <- data.table::data.table(
   sample = samples,
   treatment = treatments
 )
-reads <- load_matrix("/Volumes/directrna/data_summary/hES_polyA/hES_all_MAPQ10_nanopore.isoquant/OUT/",design)
+reads <- load_matrix("PATH/TO/Isoquant/OUT/",design)
 ```
 
 #### Step 3: PAS Calling (optional)
