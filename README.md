@@ -96,6 +96,28 @@ sample1 <- c(paste0(extdata_path, "/D0/rep1"), paste0(extdata_path, "/D0/rep2"),
 sample2 <- c(paste0(extdata_path, "/D7/rep1"), paste0(extdata_path, "/D7/rep2"), paste0(extdata_path, "/D7/rep3"))
 reads <- load_samples(sample1, sample2, group1 = "D0", group2 = "D7")
 ```
+Alternatively, you can load all the samples at once by generating a sample sheet as a data table in R like this:
+```R
+ sample treatment
+          <char>    <char>
+1: D0_1        D0
+2: D0_2        D0
+3: D0_3        D0
+4: D7_1       D7
+5: D7_2        D7
+6: D7_3        D7
+```R
+When you've run all the samples with IsoQuant in a command and the result is in the `OUT` directory, you're ready to load them:
+```R
+# Load samples all at once
+samples <- c("D0_1","D0_2","D0_3","D7_1","D7_2","D7_3")
+treatments <- c( rep("D0", 3),rep("D7", 3))
+design <- data.table::data.table(
+  sample = samples,
+  treatment = treatments
+)
+reads <- load_matrix("/Volumes/directrna/data_summary/hES_polyA/hES_all_MAPQ10_nanopore.isoquant/OUT/",design)
+```
 
 #### Step 3: PAS Calling (optional)
 
