@@ -28,7 +28,7 @@ PAU_test <- function(PAU_data,reads, P_cutoff=0.1){
     dxd <- DEXSeq::estimateDispersions(dxd)
     dxd <- DEXSeq::testForDEU(dxd)
     dxd <- DEXSeq::estimateExonFoldChanges(dxd, fitExpToVar = "condition")
-    DEXSeq::plotMA( dxd, alpha = P_cutoff, cex=0.8, fill=T)
+    DEXSeq::plotMA( dxd, alpha = P_cutoff, cex=0.8)
   })
   
   

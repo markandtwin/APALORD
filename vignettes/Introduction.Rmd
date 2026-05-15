@@ -114,7 +114,21 @@ sample2 <- c(paste0(extdata_path, "/D7/rep1"), paste0(extdata_path, "/D7/rep2"),
 reads <- load_samples(sample1, sample2, group1 = "D0", group2 = "D7")
 head(reads, n=3)
 ```
-
+Alternatively, all the samples could be loaded from the same files if they were processed by IsoQuant all together.
+Make sure that the sample names in the table match the names of BAM files taken by IsoQuant.
+```{r load all samples}
+# Load samples
+# - Define paths to IsoQuant output directories for D0 (control) and D7 (experimental) groups
+extdata_path <- system.file("extdata", package = "APALORD")
+samples <- c("D0_1","D0_2","D0_3","D7_1","D7_2","D7_3")
+treatments <- c( rep("D0", 3),rep("D7", 3))
+design <- data.table::data.table(
+  sample = samples,
+  treatment = treatments
+)
+reads <- load_matrix(paste0(extdata_path,"/Isoquant_all"),design)
+head(reads, n=3)
+```
 ##### Step 2.2: Load Samples from .bam files directly (the current package doesn't include demo bam files to work with this function)
 
 - set path to gtf file (`gtf_file`), path to genome file (`genome_file`) and path to sample bam files (`infile1`, `infile2`)

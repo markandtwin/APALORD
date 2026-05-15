@@ -8,10 +8,18 @@ gtf_file <- paste0(extdata_path,"/hg38_chr21.gtf.gz")
 gene_reference <- load_gtf(gtf_file,cores = 5)
 
 
-
 sample1 <- c(paste0(extdata_path,"/D0/rep1"),paste0(extdata_path,"/D0/rep2"),paste0(extdata_path,"/D0/rep3"))
 sample2 <- c(paste0(extdata_path,"/D7/rep1"),paste0(extdata_path,"/D7/rep2"),paste0(extdata_path,"/D7/rep3"))
 reads <- load_samples(sample1,sample2, group1="D0",group2="D7")
+#######Alternatively, all the samples could be loaded from the same files if they were processed by IsoQuant all together.
+#######Make sure that the sample names in the table match the names of BAM files taken by IsoQuant.
+samples <- c("D0_1","D0_2","D0_3","D7_1","D7_2","D7_3")
+treatments <- c( rep("D0", 3),rep("D7", 3))
+design <- data.table::data.table(
+  sample = samples,
+  treatment = treatments
+)
+reads <- load_matrix(paste0(extdata_path,"/Isoquant_all"),design)
 
 PAS_data <- PAS_calling(gene_reference,reads,cores=5,direct_RNA = T)
 write.table(PAS_data,file="../results/PAS_bed_hES_0.01_D7_D0.bed",quote = F,col.names = F, row.names = F,sep = "\t")

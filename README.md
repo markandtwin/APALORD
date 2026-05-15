@@ -98,16 +98,15 @@ reads <- load_samples(sample1, sample2, group1 = "D0", group2 = "D7")
 ```
 Alternatively, you can load all the samples at once by generating a sample sheet as a data table in R like this:
 ```R
- sample treatment
-          <char>    <char>
-1: D0_1        D0
-2: D0_2        D0
-3: D0_3        D0
-4: D7_1       D7
-5: D7_2        D7
-6: D7_3        D7
+sample  treatment
+D0_1  D0
+D0_2  D0
+D0_3  D0
+D7_1 D7
+D7_2 D7
+D7_3 D7
 ```
-When you've run all the samples with IsoQuant in a command and the result is in the `OUT` directory, you're ready to load them:
+Make sure that the sample names in the table match the names of BAM files taken by IsoQuant.When you've run all the samples with IsoQuant in a command and the result is in the `OUT` directory, you're ready to load them:
 ```R
 # Load samples all at once
 samples <- c("D0_1","D0_2","D0_3","D7_1","D7_2","D7_3")
