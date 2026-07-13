@@ -96,7 +96,7 @@ sample1 <- c(paste0(extdata_path, "/D0/rep1"), paste0(extdata_path, "/D0/rep2"),
 sample2 <- c(paste0(extdata_path, "/D7/rep1"), paste0(extdata_path, "/D7/rep2"), paste0(extdata_path, "/D7/rep3"))
 reads <- load_samples(sample1, sample2, group1 = "D0", group2 = "D7")
 ```
-####Alternatively, we recommend that you load all the samples at once by generating a sample sheet as a data table in R like this:####
+**Alternatively, we recommend that you run IsoQuant with all the samples together and then load them all at once by generating a sample sheet as a data table in R like this:**
 ```R
 sample  treatment
 D0_1  D0
