@@ -1,6 +1,6 @@
 # APALORD: Alternative Polyadenylation Analysis of LOng-ReaDs (APALORD) RNA-seq
 
-`APALORD` is an R package for analyzing Alternative Polyadenylation (APA) in long-read RNA-seq data. It provides tools to identify polyadenylation sites (PAS), quantify polyadenylation site usage (PAU),  and visualize APA changes across conditions. Optimized for multi-core processing, `APALORD` is ideal for APA analysis utilizing long read RNA-seq across conditions.
+`APALORD` is an R package for analyzing Alternative Polyadenylation (APA) in long-read RNA-seq data. It provides tools to identify polyadenylation sites (PAS), quantify polyadenylation site usage (PAU),  and visualize APA changes across conditions. Optimized for multi-core processing, `APALORD` is ideal for APA analysis utilizing long read RNA-seq across conditions. 
 
 ## Features
 
@@ -19,7 +19,7 @@
 - R package: `devtools` (for installation)
 - Input files:
   - GTF annotation file (e.g., `hg38_chr21.gtf.gz`)
-  - Preprocessed long read RNA-seq data (e.g., output of IsoQuant) for two groups
+  - Preprocessed long read RNA-seq data (e.g., output of IsoQuant) for two groups. When using IsoQuant output as input for APALORD, make sure you have `OUT.corrected_reads.bed.gz` and `OUT.read_assignments.tsv.gz` in the output directory. For IsoQuant<=3.10, it's default. For IsoQuant>=3.11, use `--large_output read_assignments corrected_bed` to make sure they are kept in the output. 
 
 
 ### Install APALORD
@@ -96,7 +96,7 @@ sample1 <- c(paste0(extdata_path, "/D0/rep1"), paste0(extdata_path, "/D0/rep2"),
 sample2 <- c(paste0(extdata_path, "/D7/rep1"), paste0(extdata_path, "/D7/rep2"), paste0(extdata_path, "/D7/rep3"))
 reads <- load_samples(sample1, sample2, group1 = "D0", group2 = "D7")
 ```
-Alternatively, you can load all the samples at once by generating a sample sheet as a data table in R like this:
+####Alternatively, we recommend that you load all the samples at once by generating a sample sheet as a data table in R like this:####
 ```R
 sample  treatment
 D0_1  D0
@@ -115,7 +115,7 @@ design <- data.table::data.table(
   sample = samples,
   treatment = treatments
 )
-reads <- load_matrix("PATH/TO/Isoquant/OUT/",design)
+reads <- load_matrix(paste0(extdata_path, "/Isoquant_all"),design)
 ```
 
 #### Step 3: PAS Calling (optional)
